@@ -24,19 +24,18 @@ The UCEF implementation enforces privacy using standard Solidity authorisation c
 ```
 
 ## **Examples**
-A range of examples are available at: [Examples/](examples/)
+A range of examples are available at: [examples/](examples/)
 
 ## **Comparison with existing implementations**
 
-|  | **UCEF by Applied Blockchain** | **fhEVM ERC-20 by Zama** | **Confidential ERC-20 Framework using FHE by Inco & Circle** | **COTI Private ERC-20**
- |
-| --- | --- | --- | --- | --- |
-| Confidential Balances | ✅ | ✅ | ✅ | ✅ |
-| Fully Anonymous Accounts | ✅ | ❌ | ❌ | ❌ |
-| Programmable Confidentiality | ✅ | 🟠 Partial Support | 🟠 Partial Support | ❌ |
-| Unmodified ERC-20 Interface | ✅ | ❌ | ❌ | ❌ |
-| Cryptography agnostic | ✅ | ❌ | ❌ | ❌ |
+|                                | **UCEF by Applied Blockchain** | **fhEVM ERC-20 by Zama** | **Confidential ERC-20 Framework using FHE by Inco & Circle** | **COTI Private ERC-20** |
+|--------------------------------|--------------------------------|--------------------------|------------------------------------------------------------|-------------------------|
+| **Confidential Balances**      | ✅                              | ✅                        | ✅                                                          | ✅                       |
+| **Fully Anonymous Accounts**   | ✅                              | ❌                        | ❌                                                          | ❌                       |
+| **Programmable Confidentiality** | ✅                              | 🟠 Partial Support        | 🟠 Partial Support                                          | ❌                       |
+| **Unmodified ERC-20 Interface** | ✅                              | ❌                        | ❌                                                          | ❌                       |
+| **Cryptography Agnostic**      | ✅                              | ❌                        | ❌                                                          | ❌                       |
 
 ## **Adopted By**
+<a href="https://silentdata.com/"><img src="https://github.com/user-attachments/assets/36ea4772-23c8-4c7a-ad2e-e3d6ee40ef9a" alt="Light Silent Data Logo" width="300"/></a>
 
-![sd-rollup-landscape-light.png](attachment:6f71133c-4d46-4f5c-83c7-0626493a4476:sd-rollup-landscape-light.png)
