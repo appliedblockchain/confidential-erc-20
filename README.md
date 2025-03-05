@@ -8,7 +8,7 @@ The rapid growth of decentralised finance highlights a critical tension between 
 
 To achieve a truly unopinionated implementation, cryptographic details should be abstracted away from the Solidity interface. This ensures that different cryptographic approaches can be swapped without altering the contract’s external behaviour. Furthermore, logic around permissions and visibility controls should be programmable using standard Solidity constructs, avoiding proprietary libraries or custom extensions. The UCEF approach preserves the ERC-20 standard’s simplicity and composability while enabling flexible privacy rules that can adapt to evolving security requirements and compliance needs.
 
-***Features***
+## ***Features***
 
 - The same ERC-20 interface
 - No custom libraries
@@ -23,11 +23,10 @@ The UCEF implementation enforces privacy using standard Solidity authorisation c
     }
 ```
 
-*A confidential balance implementation under UCEF - see full implementation examples at* https://github.com/appliedblockchain/unopinionated-confidential-erc-20-framework
+## **Examples**
+A range of examples are available at: [Examples/](examples/)
 
-I 
-
-**Comparison with existing implementations**
+## **Comparison with existing implementations**
 
 |  | **UCEF by Applied Blockchain** | **fhEVM ERC-20 by Zama** | **Confidential ERC-20 Framework using FHE by Inco & Circle** | **COTI Private ERC-20**
  |
@@ -38,6 +37,6 @@ I
 | Unmodified ERC-20 Interface | ✅ | ❌ | ❌ | ❌ |
 | Cryptography agnostic | ✅ | ❌ | ❌ | ❌ |
 
-**Adopted By**
+## **Adopted By**
 
 ![sd-rollup-landscape-light.png](attachment:6f71133c-4d46-4f5c-83c7-0626493a4476:sd-rollup-landscape-light.png)
