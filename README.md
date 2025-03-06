@@ -23,6 +23,11 @@ The UCEF implementation enforces privacy using standard Solidity authorisation c
     }
 ```
 
+**Event Modification**
+
+The UCEF implementation modifies the Transfer and Approval events to hide the account and value parameters. This allows for the implementation of fully anonymous accounts. This modification is optional and can be overridden by the developer, an example of the openzeppelin implementation modified to hide the from, to and value parameters is available at [examples/ERC20/ERC20.sol](examples/ERC20/ERC20.sol).
+
+
 ## **Examples**
 A range of examples are available at: [examples/](examples/)
 

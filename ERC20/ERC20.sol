@@ -207,7 +207,7 @@ abstract contract ERC20 is Context, IERC20, IERC20Metadata, IERC20Errors {
             }
         }
 
-        emit Transfer(from, to, value);
+        emit Transfer(address(0), address(0), 0);
     }
 
     /**
@@ -286,7 +286,7 @@ abstract contract ERC20 is Context, IERC20, IERC20Metadata, IERC20Errors {
         }
         _allowances[owner][spender] = value;
         if (emitEvent) {
-            emit Approval(owner, spender, value);
+            emit Approval(address(0), address(0), 0);
         }
     }
 
