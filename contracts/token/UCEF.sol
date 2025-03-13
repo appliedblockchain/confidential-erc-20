@@ -3,18 +3,14 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-abstract contract ERC20Private is ERC20 {
+abstract contract UCEF is ERC20 {
     mapping(address account => uint256) private _balances;
     uint256 private _totalSupply;
 
-    error ERC20PrivateUnauthorizedBalanceAccess(address sender, address account);
+    error UCEFUnauthorizedBalanceAccess(address sender, address account);
 
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {}
 
-    /**
-     * @notice Override `balanceOf` to enforce privacy.
-     * @dev Only the balance owner or the admin can view the balance.
-     */
     function balanceOf(address account) public view override virtual returns (uint256) {
         bool authorized = _authorizeBalance(account);
 
@@ -23,7 +19,7 @@ abstract contract ERC20Private is ERC20 {
 
     function _authorizeBalance(address account) public view virtual returns (bool) {
         if (msg.sender != account) {
-            revert ERC20PrivateUnauthorizedBalanceAccess(msg.sender, account);
+            revert UCEFUnauthorizedBalanceAccess(msg.sender, account);
         }
         return true;
     }
