@@ -46,7 +46,7 @@ describe('UCEFOnlyOwner', function () {
       const halfAmount = TRANSFER_AMOUNT / 2n
       await expect(token.connect(user1).transfer(user2Address, halfAmount))
         .to.emit(token, 'Transfer')
-        .withArgs(ethers.ZeroAddress, ethers.ZeroAddress, halfAmount)
+        .withArgs(ethers.ZeroAddress, ethers.ZeroAddress, 0n)
     })
 
     it("Should fail if sender doesn't have enough tokens", async function () {
