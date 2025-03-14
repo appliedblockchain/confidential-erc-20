@@ -86,4 +86,120 @@ describe('UCEFOnlyOwner', function () {
       )
     })
   })
+
+  describe('Allowances', function () {
+    const ALLOWANCE_AMOUNT = ethers.parseUnits('25', 18)
+
+    beforeEach(async function () {
+      // Transfer some tokens to user1 for testing
+      await transfer(token.connect(owner), user1Address, TRANSFER_AMOUNT)
+    })
+
+    describe('Access Control', function () {
+      beforeEach(async function () {
+        // Set up an allowance for testing
+        await token.connect(user1).approve(user2Address, ALLOWANCE_AMOUNT)
+      })
+
+      it('Should allow owner to view their own allowance', async function () {
+        const allowance = await token.connect(user1).allowance(user1Address, user2Address)
+        expect(allowance).to.equal(ALLOWANCE_AMOUNT)
+      })
+
+      it('Should allow spender to view their allowance', async function () {
+        const allowance = await token.connect(user2).allowance(user1Address, user2Address)
+        expect(allowance).to.equal(ALLOWANCE_AMOUNT)
+      })
+
+      it('Should revert when unauthorized third party tries to view allowance', async function () {
+        await expect(token.connect(user2).allowance(user1Address, ownerAddress))
+          .to.be.revertedWithCustomError(token, 'UCEFUnauthorizedBalanceAccess')
+          .withArgs(user2Address, user1Address)
+      })
+    })
+
+    describe('Setting Allowances', function () {
+      it('Should set and get allowance correctly when called by owner', async function () {
+        await token.connect(user1).approve(user2Address, ALLOWANCE_AMOUNT)
+        const allowance = await token.connect(user1).allowance(user1Address, user2Address)
+        expect(allowance).to.equal(ALLOWANCE_AMOUNT)
+      })
+
+      it('Should emit Approval event with zero addresses when setting allowance', async function () {
+        await expect(token.connect(user1).approve(user2Address, ALLOWANCE_AMOUNT))
+          .to.emit(token, 'Approval')
+          .withArgs(ethers.ZeroAddress, ethers.ZeroAddress, 0n)
+      })
+
+      it('Should not allow setting allowance for zero address spender', async function () {
+        await expect(token.connect(user1).approve(ethers.ZeroAddress, ALLOWANCE_AMOUNT))
+          .to.be.revertedWithCustomError(token, 'ERC20InvalidSpender')
+          .withArgs(ethers.ZeroAddress)
+      })
+
+      it('Should allow changing allowance', async function () {
+        // Set initial allowance
+        await token.connect(user1).approve(user2Address, ALLOWANCE_AMOUNT)
+
+        // Change allowance
+        const newAllowance = ALLOWANCE_AMOUNT * 2n
+        await token.connect(user1).approve(user2Address, newAllowance)
+
+        const allowance = await token.connect(user1).allowance(user1Address, user2Address)
+        expect(allowance).to.equal(newAllowance)
+      })
+    })
+
+    describe('Using Allowances', function () {
+      beforeEach(async function () {
+        // Set up allowance for testing
+        await token.connect(user1).approve(user2Address, ALLOWANCE_AMOUNT)
+      })
+
+      it('Should allow spender to transfer allowed amount', async function () {
+        // User2 transfers tokens from User1 to themselves
+        await token.connect(user2).transferFrom(user1Address, user2Address, ALLOWANCE_AMOUNT)
+
+        // Check balances
+        expect(await token.connect(user1).balanceOf(user1Address)).to.equal(TRANSFER_AMOUNT - ALLOWANCE_AMOUNT)
+        expect(await token.connect(user2).balanceOf(user2Address)).to.equal(ALLOWANCE_AMOUNT)
+
+        // Check allowance is reduced (viewed by the spender)
+        const finalAllowance = await token.connect(user2).allowance(user1Address, user2Address)
+        expect(finalAllowance).to.equal(0)
+      })
+
+      it('Should not allow spender to transfer more than allowed amount', async function () {
+        const exceedAmount = ALLOWANCE_AMOUNT + 1n
+        await expect(token.connect(user2).transferFrom(user1Address, user2Address, exceedAmount))
+          .to.be.revertedWithCustomError(token, 'ERC20InsufficientAllowance')
+          .withArgs(ethers.ZeroAddress, 0n, 0n)
+      })
+
+      it('Should handle infinite allowance correctly', async function () {
+        const infiniteAllowance = ethers.MaxUint256
+
+        // Set infinite allowance
+        await token.connect(user1).approve(user2Address, infiniteAllowance)
+
+        // Perform a transfer
+        const transferAmount = ALLOWANCE_AMOUNT
+        await token.connect(user2).transferFrom(user1Address, user2Address, transferAmount)
+
+        // Check that allowance remains infinite
+        const allowance = await token.connect(user2).allowance(user1Address, user2Address)
+        expect(allowance).to.equal(infiniteAllowance)
+      })
+
+      it('Should fail when trying to transfer with expired allowance', async function () {
+        // Use up the allowance
+        await token.connect(user2).transferFrom(user1Address, user2Address, ALLOWANCE_AMOUNT)
+
+        // Try to transfer again
+        await expect(token.connect(user2).transferFrom(user1Address, user2Address, 1n))
+          .to.be.revertedWithCustomError(token, 'ERC20InsufficientAllowance')
+          .withArgs(ethers.ZeroAddress, 0n, 0n)
+      })
+    })
+  })
 })

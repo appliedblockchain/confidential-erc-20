@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IUCEFAuthorizer {
     function _authorizeBalance(address account) external view returns (bool);
@@ -37,6 +36,7 @@ interface IUCEFAuthorizer {
 abstract contract UCEF is ERC20 {
     mapping(address account => uint256) private _balances;
     uint256 private _totalSupply;
+    mapping(address account => mapping(address spender => uint256)) private _allowances;
 
     /**
      * @dev Thrown when an unauthorized address attempts to view a balance
@@ -130,5 +130,107 @@ abstract contract UCEF is ERC20 {
         }
 
         emit Transfer(address(0), address(0), 0);
+    }
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     * 
+     * Access Control:
+     * - Only the token owner or the approved spender can view the allowance
+     * - Any other address attempting to view the allowance will trigger UCEFUnauthorizedBalanceAccess
+     * 
+     * Requirements:
+     * - msg.sender must be either the owner or the spender of the allowance
+     * 
+     * @param owner The address that owns the tokens
+     * @param spender The address that can spend the tokens
+     * @return uint256 The number of tokens the spender is allowed to spend
+     * @custom:error UCEFUnauthorizedBalanceAccess Thrown when an unauthorized address attempts to view the allowance
+     */
+    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+        if (msg.sender != owner && msg.sender != spender) {
+            revert UCEFUnauthorizedBalanceAccess(msg.sender, owner);
+        }
+        return _allowance(owner, spender);
+    }
+
+    /**
+     * @dev Internal helper function to access the allowance mapping directly.
+     * This function provides raw access to the allowance value without any access control checks.
+     * It should only be used by internal functions that have already performed necessary validations.
+     *
+     * @param owner The address that owns the tokens and has granted the allowance
+     * @param spender The address that has been granted spending privileges
+     * @return uint256 The raw allowance value from the mapping
+     *
+     * Note: This function is separated from the public allowance() function to maintain
+     * a clear separation between access-controlled and internal raw data access
+     */
+    function _allowance(address owner, address spender) internal view returns (uint256) {
+        return _allowances[owner][spender];
+    }
+
+    /**
+     * @dev Sets `value` as the allowance of `spender` over the `owner` s tokens.
+     * 
+     * This internal function is equivalent to `approve`, and can be used to
+     * e.g. set automatic allowances for certain subsystems, etc.
+     *
+     * Requirements:
+     * - `owner` cannot be the zero address
+     * - `spender` cannot be the zero address
+     *
+     * @param owner The address that owns the tokens
+     * @param spender The address that can spend the tokens
+     * @param value The amount of tokens to allow
+     * @param emitEvent Whether to emit the Approval event
+     */
+    function _approve(address owner, address spender, uint256 value, bool emitEvent) internal override virtual {
+        if (owner == address(0)) {
+            revert ERC20InvalidApprover(address(0));
+        }
+        if (spender == address(0)) {
+            revert ERC20InvalidSpender(address(0));
+        }
+        _allowances[owner][spender] = value;
+        if (emitEvent) {
+            emit Approval(address(0), address(0), 0);
+        }
+    }
+
+    /**
+     * @dev Updates the allowance of a spender for a given owner when tokens are spent via transferFrom.
+     * This internal function is used to reduce the spender's allowance by the specified value.
+     * 
+     * Special cases:
+     * - If the current allowance is the maximum uint256 value, it represents an infinite allowance
+     *   and will not be reduced (acts as an infinite approval)
+     * - If the requested value exceeds the current allowance, the transaction will revert
+     * 
+     * Requirements:
+     * - `value` must not exceed the current allowance
+     * - Current allowance must be finite (less than max uint256) for it to be reduced
+     *
+     * @param owner The address that owns the tokens and has granted the allowance
+     * @param spender The address that is spending the tokens
+     * @param value The amount of tokens being spent
+     *
+     * Note: This function calls _approve internally with emitEvent=false to avoid
+     * unnecessary event emissions during transfers
+     */
+    function _spendAllowance(address owner, address spender, uint256 value) internal override virtual {
+        uint256 currentAllowance = allowance(owner, spender);
+        if (currentAllowance < type(uint256).max) {
+            if (currentAllowance < value) {
+                revert ERC20InsufficientAllowance(address(0), 0, 0);
+            }
+            unchecked {
+                _approve(owner, spender, currentAllowance - value, false);
+            }
+        }
     }
 } 
