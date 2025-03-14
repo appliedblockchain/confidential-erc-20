@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../token/UCEF.sol";
-import "../extensions/UCEFPermit.sol";
 import "../extensions/UCEFRegulated.sol";
 
 contract UCEFOnlyOwnerAndRegulator is UCEFRegulated {
