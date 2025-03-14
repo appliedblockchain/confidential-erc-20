@@ -3,12 +3,12 @@
 
 pragma solidity ^0.8.20;
 
-import {ERC20} from "../ERC20.sol";
+import {UCEF} from "../token/UCEF.sol";
 
 /**
  * @dev Extension of {ERC20} that adds a cap to the supply of tokens.
  */
-abstract contract ERC20Capped is ERC20 {
+abstract contract UCEFCapped is UCEF {
     uint256 private immutable _cap;
 
     /**

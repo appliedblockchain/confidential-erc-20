@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC3156FlashBorrower} from "../../../interfaces/IERC3156FlashBorrower.sol";
-import {IERC3156FlashLender} from "../../../interfaces/IERC3156FlashLender.sol";
-import {ERC20} from "../ERC20.sol";
+import {IERC3156FlashBorrower} from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
+import {IERC3156FlashLender} from "@openzeppelin/contracts/interfaces/IERC3156FlashLender.sol";
+import {UCEF} from "../token/UCEF.sol";
 
 /**
  * @dev Implementation of the ERC-3156 Flash loans extension, as defined in
@@ -18,7 +18,7 @@ import {ERC20} from "../ERC20.sol";
  * {maxFlashLoan} will not correctly reflect the maximum that can be flash minted. We recommend
  * overriding {maxFlashLoan} so that it correctly reflects the supply cap.
  */
-abstract contract ERC20FlashMint is ERC20, IERC3156FlashLender {
+abstract contract UCEFFlashMint is UCEF, IERC3156FlashLender {
     bytes32 private constant RETURN_VALUE = keccak256("ERC3156FlashBorrower.onFlashLoan");
 
     /**

@@ -3,10 +3,14 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC20, IERC20Metadata, ERC20} from "../ERC20.sol";
-import {SafeERC20} from "../utils/SafeERC20.sol";
-import {IERC4626} from "../../../interfaces/IERC4626.sol";
-import {Math} from "../../../utils/math/Math.sol";
+import {UCEF} from "../token/UCEF.sol";
+import {IUCEF} from "../token/IUCEF.sol";
+
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @dev Implementation of the ERC-4626 "Tokenized Vault Standard" as defined in
@@ -45,10 +49,10 @@ import {Math} from "../../../utils/math/Math.sol";
  * To learn more, check out our xref:ROOT:erc4626.adoc[ERC-4626 guide].
  * ====
  */
-abstract contract ERC4626 is ERC20, IERC4626 {
+abstract contract ERC4626 is UCEF, IERC4626 {
     using Math for uint256;
 
-    IERC20 private immutable _asset;
+    IUCEF private immutable _asset;
     uint8 private immutable _underlyingDecimals;
 
     /**
@@ -74,7 +78,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
     /**
      * @dev Set the underlying asset contract. This must be an ERC20-compatible contract (ERC-20 or ERC-777).
      */
-    constructor(IERC20 asset_) {
+    constructor(IUCEF asset_) {
         (bool success, uint8 assetDecimals) = _tryGetAssetDecimals(asset_);
         _underlyingDecimals = success ? assetDecimals : 18;
         _asset = asset_;
@@ -83,7 +87,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
     /**
      * @dev Attempts to fetch the asset decimals. A return value of false indicates that the attempt failed in some way.
      */
-    function _tryGetAssetDecimals(IERC20 asset_) private view returns (bool ok, uint8 assetDecimals) {
+    function _tryGetAssetDecimals(IUCEF asset_) private view returns (bool ok, uint8 assetDecimals) {
         (bool success, bytes memory encodedDecimals) = address(asset_).staticcall(
             abi.encodeCall(IERC20Metadata.decimals, ())
         );
@@ -114,7 +118,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
 
     /** @dev See {IERC4626-totalAssets}. */
     function totalAssets() public view virtual returns (uint256) {
-        return IERC20(asset()).balanceOf(address(this));
+        return IUCEF(asset()).balanceOf(address(this));
     }
 
     /** @dev See {IERC4626-convertToShares}. */
@@ -244,7 +248,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
         // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the
         // assets are transferred and before the shares are minted, which is a valid state.
         // slither-disable-next-line reentrancy-no-eth
-        SafeERC20.safeTransferFrom(IERC20(asset()), caller, address(this), assets);
+        SafeERC20.safeTransferFrom(IUCEF(asset()), caller, address(this), assets);
         _mint(receiver, shares);
 
         emit Deposit(caller, receiver, assets, shares);
@@ -271,7 +275,7 @@ abstract contract ERC4626 is ERC20, IERC4626 {
         // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the
         // shares are burned and after the assets are transferred, which is a valid state.
         _burn(owner, shares);
-        SafeERC20.safeTransfer(IERC20(asset()), receiver, assets);
+        SafeERC20.safeTransfer(IUCEF(asset()), receiver, assets);
 
         emit Withdraw(caller, receiver, owner, assets, shares);
     }

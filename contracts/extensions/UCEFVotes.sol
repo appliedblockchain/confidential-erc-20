@@ -3,9 +3,9 @@
 
 pragma solidity ^0.8.20;
 
-import {ERC20} from "../ERC20.sol";
-import {Votes} from "../../../governance/utils/Votes.sol";
-import {Checkpoints} from "../../../utils/structs/Checkpoints.sol";
+import {UCEF} from "../token/UCEF.sol";
+import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
+import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 
 /**
  * @dev Extension of ERC-20 to support Compound-like voting and delegation. This version is more generic than Compound's,
@@ -20,7 +20,7 @@ import {Checkpoints} from "../../../utils/structs/Checkpoints.sol";
  * By default, token balance does not account for voting power. This makes transfers cheaper. The downside is that it
  * requires users to delegate to themselves in order to activate checkpoints and have their voting power tracked.
  */
-abstract contract ERC20Votes is ERC20, Votes {
+abstract contract UCEFVotes is UCEF, Votes {
     /**
      * @dev Total supply cap has been exceeded, introducing a risk of votes overflowing.
      */

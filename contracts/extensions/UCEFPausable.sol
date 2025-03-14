@@ -3,8 +3,8 @@
 
 pragma solidity ^0.8.20;
 
-import {ERC20} from "../ERC20.sol";
-import {Pausable} from "../../../utils/Pausable.sol";
+import {UCEF} from "../token/UCEF.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @dev ERC-20 token with pausable token transfers, minting and burning.
@@ -19,7 +19,7 @@ import {Pausable} from "../../../utils/Pausable.sol";
  * access control, e.g. using {AccessControl} or {Ownable}. Not doing so will
  * make the contract pause mechanism of the contract unreachable, and thus unusable.
  */
-abstract contract ERC20Pausable is ERC20, Pausable {
+abstract contract UCEFPausable is UCEF, Pausable {
     /**
      * @dev See {ERC20-_update}.
      *

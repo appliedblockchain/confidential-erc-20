@@ -3,8 +3,11 @@
 
 pragma solidity ^0.8.20;
 
-import {IERC20, IERC20Metadata, ERC20} from "../ERC20.sol";
-import {SafeERC20} from "../utils/SafeERC20.sol";
+import {UCEF} from "../token/UCEF.sol";
+import {IUCEF} from "../token/IUCEF.sol";
+
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @dev Extension of the ERC-20 token contract to support token wrapping.
@@ -18,16 +21,16 @@ import {SafeERC20} from "../utils/SafeERC20.sol";
  * may undercollateralize the wrapper (i.e. wrapper's total supply is higher than its underlying balance). See {_recover}
  * for recovering value accrued to the wrapper.
  */
-abstract contract ERC20Wrapper is ERC20 {
-    IERC20 private immutable _underlying;
+abstract contract UCEFWrapper is UCEF {
+    IUCEF private immutable _underlying;
 
     /**
      * @dev The underlying token couldn't be wrapped.
      */
     error ERC20InvalidUnderlying(address token);
 
-    constructor(IERC20 underlyingToken) {
-        if (underlyingToken == this) {
+    constructor(IUCEF underlyingToken) {
+        if (address(underlyingToken) == address(this)) {
             revert ERC20InvalidUnderlying(address(this));
         }
         _underlying = underlyingToken;
@@ -47,7 +50,7 @@ abstract contract ERC20Wrapper is ERC20 {
     /**
      * @dev Returns the address of the underlying ERC-20 token that is being wrapped.
      */
-    function underlying() public view returns (IERC20) {
+    function underlying() public view returns (IUCEF) {
         return _underlying;
     }
 

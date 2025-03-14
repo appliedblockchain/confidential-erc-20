@@ -3,10 +3,10 @@
 
 pragma solidity ^0.8.20;
 
-import {ERC20} from "../ERC20.sol";
-import {IERC165, ERC165} from "../../../utils/introspection/ERC165.sol";
-import {IERC1363} from "../../../interfaces/IERC1363.sol";
-import {ERC1363Utils} from "../utils/ERC1363Utils.sol";
+import {UCEF} from "../token/UCEF.sol";
+import {IERC165, ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {IERC1363} from "@openzeppelin/contracts/interfaces/IERC1363.sol";
+import {ERC1363Utils} from "@openzeppelin/contracts/token/ERC20/utils/ERC1363Utils.sol";
 
 /**
  * @title ERC1363
@@ -16,7 +16,7 @@ import {ERC1363Utils} from "../utils/ERC1363Utils.sol";
  *
  * _Available since v5.1._
  */
-abstract contract ERC1363 is ERC20, ERC165, IERC1363 {
+abstract contract ERC1363 is UCEF, ERC165, IERC1363 {
     /**
      * @dev Indicates a failure within the {transfer} part of a transferAndCall operation.
      * @param receiver Address to which tokens are being transferred.
