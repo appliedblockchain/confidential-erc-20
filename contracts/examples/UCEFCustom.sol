@@ -8,7 +8,7 @@ contract UCEFCustom is UCEF {
     address public regulator;
     uint256 private constant BALANCE_THRESHOLD = 10_000 ether;
 
-    constructor() UCEF("UCEFOnlyOwner", "uOOT") {
+    constructor() UCEF("UCEFCustom", "uOCT") {
         regulator = msg.sender;
     }
 

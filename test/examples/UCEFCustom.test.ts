@@ -13,8 +13,8 @@ describe('UCEFCustom', function () {
   let user1Address: string
   let user2Address: string
 
-  const TOKEN_NAME = 'UCEFOnlyOwner'
-  const TOKEN_SYMBOL = 'uOOT'
+  const TOKEN_NAME = 'UCEFCustom'
+  const TOKEN_SYMBOL = 'uOCT'
   const BALANCE_THRESHOLD = ethers.parseEther('10000')
   const ABOVE_THRESHOLD_AMOUNT = BALANCE_THRESHOLD + ethers.parseEther('1')
   const BELOW_THRESHOLD_AMOUNT = ethers.parseEther('1000')
