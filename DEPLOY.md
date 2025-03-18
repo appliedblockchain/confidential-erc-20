@@ -1,13 +1,43 @@
-# Deployment Guide
+# Deployment Examples
 
-This guide explains how to build and deploy smart contracts for both local Hardhat development chain and SilentData environment.
+Examples of how to deploy UCEF tokens on supporting platforms.
 
 ## Prerequisites
 
 - Node.js (v14 or higher)
 - npm or yarn
 - Hardhat
-- Access to SilentData credentials (for SilentData deployment)
+- Access to Silent Data credentials (for Silent Data deployment)
+
+## Silent Data Deployment
+
+### 1. Configure Environment
+
+Create a `.env` file in the root directory with deployer private key and your Silent Data credentials:
+
+```env
+PRIVATE_KEY=<deployer_private_key>
+SILENTDATA_RPC_URL=<silent_data_rpc_url>
+SILENTDATA_CHAIN_ID=<silent_data_chain_id>
+```
+
+### 2. Compile Contracts
+
+```bash
+pnpm compile
+```
+
+### 3. Deploy to Silent Data
+
+```bash
+pnpm deploy:module <module_name> silentdata
+```
+
+Example:
+
+```bash
+pnpm deploy:module UCEFOnlyOwner silentdata
+```
 
 ## Local Development with Hardhat
 
@@ -33,7 +63,7 @@ This will start a local blockchain network and provide you with a set of test ac
 
 ### 4. Configure Environment
 
-Create a `.env` file in the root directory with your SilentData credentials:
+Create a `.env` file in the root directory with deployer private key:
 
 ```env
 PRIVATE_KEY=<deployer_private_key>
@@ -51,42 +81,14 @@ Example:
 pnpm deploy:module UCEFOnlyOwner
 ```
 
-## SilentData Deployment
 
-### 1. Configure Environment
-
-Create a `.env` file in the root directory with your SilentData credentials:
-
-```env
-PRIVATE_KEY=<deployer_private_key>
-SILENTDATA_RPC_URL=<silentdata_rpc_url>
-SILENTDATA_CHAIN_ID=<silentdata_chain_id>
-```
-
-### 2. Compile Contracts
-
-```bash
-pnpm compile
-```
-
-### 3. Deploy to SilentData
-
-```bash
-pnpm deploy:module <module_name> silentdata
-```
-
-Example:
-
-```bash
-pnpm deploy:module UCEFOnlyOwner silentdata
-```
 
 ## Important Notes
 
 - Always ensure your contracts are thoroughly tested before deployment
 - Keep your private keys and API credentials secure
 - Back up your deployment addresses and transaction hashes
-- Monitor gas prices for optimal deployment timing on SilentData
+- Monitor gas prices for optimal deployment timing on Silent Data
 
 ## Troubleshooting
 
