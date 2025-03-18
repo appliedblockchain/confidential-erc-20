@@ -3,10 +3,6 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-interface IUCEFAuthorizer {
-    function _authorizeBalance(address account) external view returns (bool);
-}
-
 /**
  * @title UCEF (User Confidential ERC20 Funds)
  * @dev Implementation of a confidential ERC20 token where balance visibility is restricted.
