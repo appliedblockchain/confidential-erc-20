@@ -1,0 +1,27 @@
+node_modules
+.env
+coverage
+coverage.json
+typechain
+typechain-types
+ignition/deployments/
+
+# Hardhat files
+cache
+artifacts
+
+# Next.js
+.next
+out
+
+# Vite
+dist
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+.vscode
