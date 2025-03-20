@@ -30,10 +30,6 @@ export async function deployToken3643({
   const token = (await tokenFactory.deploy()) as unknown as UCEF3643
   await token.waitForDeployment()
 
-  // Set up token addresses in mock contracts
-  await mockIdentityRegistry.setToken(await token.getAddress())
-  await mockCompliance.setToken(await token.getAddress())
-
   // Initialize the token
   await token.init(
     await mockIdentityRegistry.getAddress(),

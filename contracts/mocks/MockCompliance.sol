@@ -27,12 +27,11 @@ contract MockCompliance {
 
     function destroyed(address _userAddress, uint256 _amount) external {}
 
+    /**
+     * @dev used for testing purpose
+     */
     function setCanTransfer(address _address, bool _status) external {
         _canTransfer[_address] = _status;
-    }
-
-    function setToken(address _tokenAddress) external {
-        _token = _tokenAddress;
     }
 
     function bindToken(address _tokenAddress) external {
