@@ -33,7 +33,7 @@ A range of examples are available at: [contracts/examples/](contracts/examples/)
 
 ## **Comparison with existing implementations**
 
-|                                | **UCEF by Applied Blockchain** | **fhEVM ERC-20 by Zama** | **Confidential ERC-20 Framework using FHE by Inco & Circle** | **COTI Private ERC-20** |
+|                                | **UCEF by Applied Blockchain** | **fhEVM ERC-20** | **Confidential ERC-20 Framework using FHE** | **Private ERC-20** |
 |--------------------------------|--------------------------------|--------------------------|------------------------------------------------------------|-------------------------|
 | **Confidential Balances**      | ✅                              | ✅                        | ✅                                                          | ✅                       |
 | **Fully Anonymous Accounts**   | ✅                              | ❌                        | ❌                                                          | ❌                       |
