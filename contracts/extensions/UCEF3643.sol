@@ -89,7 +89,7 @@ contract UCEF3643 is Token {
     }
 
     /**
-     *  @dev ERC-3643 (v4.1.6) replacing `balanceOf` with `_balanceOf`
+     *  @dev ERC-3643 (v4.1.6) replacing `balanceOf` with `_balanceOf`; and emitting 0 amount on `TokensUnfrozen` event.
      *  @dev See {IToken-forcedTransfer}.
      */
     function forcedTransfer(
@@ -102,7 +102,7 @@ contract UCEF3643 is Token {
         if (_amount > freeBalance) {
             uint256 tokensToUnfreeze = _amount - (freeBalance);
             _frozenTokens[_from] = _frozenTokens[_from] - (tokensToUnfreeze);
-            emit TokensUnfrozen(_from, tokensToUnfreeze);
+            emit TokensUnfrozen(_from, 0);
         }
         if (_tokenIdentityRegistry.isVerified(_to)) {
             _transfer(_from, _to, _amount);
@@ -113,7 +113,7 @@ contract UCEF3643 is Token {
     }
 
     /**
-     *  @dev ERC-3643 (v4.1.6) replacing `balanceOf` with `_balanceOf`
+     *  @dev ERC-3643 (v4.1.6) replacing `balanceOf` with `_balanceOf`; and emitting zero amount on `TokensUnfrozen` event.
      *  @dev See {IToken-burn}.
      */
     function burn(address _userAddress, uint256 _amount) public override onlyAgent {
@@ -122,21 +122,31 @@ contract UCEF3643 is Token {
         if (_amount > freeBalance) {
             uint256 tokensToUnfreeze = _amount - (freeBalance);
             _frozenTokens[_userAddress] = _frozenTokens[_userAddress] - (tokensToUnfreeze);
-            emit TokensUnfrozen(_userAddress, tokensToUnfreeze);
+            emit TokensUnfrozen(_userAddress, 0);
         }
         _burn(_userAddress, _amount);
         _tokenCompliance.destroyed(_userAddress, _amount);
     }
 
     /**
-     *  @dev ERC-3643 (v4.1.6) replacing `balanceOf` with `_balanceOf`
+     *  @dev ERC-3643 (v4.1.6) replacing `balanceOf` with `_balanceOf`; and emitting zero amount on `TokensFrozen` event
      *  @dev See {IToken-freezePartialTokens}.
      */
     function freezePartialTokens(address _userAddress, uint256 _amount) public override onlyAgent {
         uint256 balance = _balanceOf(_userAddress);
         require(balance >= _frozenTokens[_userAddress] + _amount, "Amount exceeds available balance");
         _frozenTokens[_userAddress] = _frozenTokens[_userAddress] + (_amount);
-        emit TokensFrozen(_userAddress, _amount);
+        emit TokensFrozen(_userAddress, 0);
+    }
+
+    /**
+     *   @dev ERC-3643 (v4.1.6) emitting zero amount on `TokensUnfrozen` event.
+     *  @dev See {IToken-unfreezePartialTokens}.
+     */
+    function unfreezePartialTokens(address _userAddress, uint256 _amount) public override onlyAgent {
+        require(_frozenTokens[_userAddress] >= _amount, "Amount should be less than or equal to frozen tokens");
+        _frozenTokens[_userAddress] = _frozenTokens[_userAddress] - (_amount);
+        emit TokensUnfrozen(_userAddress, 0);
     }
 
     /**

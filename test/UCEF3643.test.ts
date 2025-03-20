@@ -209,10 +209,20 @@ describe('UCEF3643', function () {
     })
 
     it('Should fail if sender is transferring frozen tokens', async function () {
-      await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('1000'))
+      expect(await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('1000')))
+        // Should emit TokensFrozen event with zero amount
+        .to.emit(token, 'TokensFrozen')
+        .withArgs(addr1Address, 0n)
       await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
         'Insufficient Balance',
       )
+
+      // Unfreeze tokens
+      await expect(token.connect(agent).unfreezePartialTokens(addr1Address, ethers.parseEther('1000')))
+        .to.emit(token, 'TokensUnfrozen')
+        .withArgs(addr1Address, 0)
+      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('100'))
     })
 
     it('Should respect per-address transfer compliance', async function () {
@@ -289,22 +299,34 @@ describe('UCEF3643', function () {
 
     it('Should allow agent to force transfer if tokens are not frozen', async function () {
       await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('500'))
-      await token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('100'))
+      await expect(token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('100')))
+        // Should not emit TokensUnfrozen event
+        .not.to.emit(token, 'TokensUnfrozen')
       expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('100'))
     })
 
-    it('Should allow agent to force transfer if tokens are frozen but to address is verified', async function () {
+    it('Should allow agent to force transfer if tokens are frozen but to account is verified', async function () {
       await mockIdentityRegistry.setVerified(addr2Address, true)
       await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('500'))
-      await token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('600'))
+      await expect(token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('600')))
+        // Should emit TokensUnfrozen event with zero amount
+        .to.emit(token, 'TokensUnfrozen')
+        .withArgs(addr1Address, 0)
       expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('600'))
     })
 
-    it('Should revert to force transfer if tokens are frozen but to address is not verified', async function () {
+    it('Should revert to force transfer if to account is not verified', async function () {
       await mockIdentityRegistry.setVerified(addr2Address, false)
       await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('500'))
+
+      // Should revert transferring more than available tokens
       await expect(
         token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('600')),
+      ).to.be.revertedWith('Transfer not possible')
+
+      // Should revert transferring less than available tokens
+      await expect(
+        token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('100')),
       ).to.be.revertedWith('Transfer not possible')
     })
 
@@ -346,7 +368,10 @@ describe('UCEF3643', function () {
 
     it('Should burn tokens even though they are frozen', async function () {
       await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('500'))
-      await token.connect(agent).burn(addr1Address, ethers.parseEther('600'))
+      expect(await token.connect(agent).burn(addr1Address, ethers.parseEther('600')))
+        // Should emit TokensUnfrozen event with zero amount
+        .to.emit(token, 'TokensUnfrozen')
+        .withArgs(addr1Address, 0)
       expect(await token.connect(addr1).balanceOf(addr1Address)).to.equal(ethers.parseEther('400'))
     })
   })
