@@ -1,45 +1,37 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
+struct IdentityData {
+    bool isVerified;
+    uint256 country;
+}
 
 contract MockIdentityRegistry {
-    mapping(address => bool) private _verified;
-    address private _token;
+    mapping(address => IdentityData) private _verified;
 
     function isVerified(address _userAddress) external view returns (bool) {
-        return _verified[_userAddress];
+        return _verified[_userAddress].isVerified;
     }
 
+    /**
+     * @dev used for testing purpose
+     */
     function setVerified(address _userAddress, bool _status) external {
-        _verified[_userAddress] = _status;
+        IdentityData memory data = _verified[_userAddress];
+        data.isVerified = _status;
+        _verified[_userAddress] = data;
     }
 
-    function setToken(address _tokenAddress) external {
-        _token = _tokenAddress;
-    }
-
-    function bindToken(address _tokenAddress) external {
-        _token = _tokenAddress;
-    }
-
-    function unbindToken(address _tokenAddress) external {
-        if (_token == _tokenAddress) {
-            _token = address(0);
-        }
-    }
-
-    function isIdentityRegistered(address _userAddress) external view returns (bool) {
+    /**
+     * @dev used for testing purpose
+     */
+    function isIdentityRegistered(address _userAddress) external view returns (IdentityData memory) {
         return _verified[_userAddress];
     }
 
+    /**
+     * @dev used for testing purpose
+     */
     function registerIdentity(address _userAddress, uint256 _country, bool _isVerified) external {
-        _verified[_userAddress] = _isVerified;
-    }
-
-    function updateIdentity(address _userAddress, uint256 _country) external {
-        // No-op for mock
-    }
-
-    function deleteIdentity(address _userAddress) external {
-        _verified[_userAddress] = false;
+        _verified[_userAddress] = IdentityData(_isVerified, _country);
     }
 } 
