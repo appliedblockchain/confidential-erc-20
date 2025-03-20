@@ -51,5 +51,11 @@ export async function deployToken3643({
   // Grant agent role to our test agent
   await token.addAgent(agentAddress)
 
+  // Set up mock to allow minting
+  await mockCompliance.setCanTransfer(ethers.ZeroAddress, true)
+
+  // Unpause the token
+  await token.connect(agent).unpause()
+
   return { token, mockIdentityRegistry, mockCompliance }
 }

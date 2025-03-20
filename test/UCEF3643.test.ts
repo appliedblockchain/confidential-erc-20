@@ -188,15 +188,10 @@ describe('UCEF3643', function () {
       // Register and verify identities
       await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
       await mockIdentityRegistry.registerIdentity(addr2Address, 1, true)
-      await mockIdentityRegistry.setVerified(addr1Address, true)
-      await mockIdentityRegistry.setVerified(addr2Address, true)
 
-      // Set up mock to allow minting and transfers
-      await mockCompliance.setCanMint(true)
-      await mockCompliance.setCanTransfer(true)
-
-      // Unpause the token
-      await token.connect(agent).unpause()
+      // Set up mock to allow transfers
+      await mockCompliance.setCanTransfer(addr1Address, true)
+      await mockCompliance.setCanTransfer(addr2Address, true)
 
       // Mint tokens to addr1 for testing
       await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
@@ -318,12 +313,8 @@ describe('UCEF3643', function () {
       await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
       await mockIdentityRegistry.setVerified(addr1Address, true)
 
-      // Set up mock to allow minting and transfers
-      await mockCompliance.setCanMint(true)
-      await mockCompliance.setCanTransfer(true)
-
-      // Unpause the token
-      await token.connect(agent).unpause()
+      // Set up mock to allow transfers
+      await mockCompliance.setCanTransfer(addr1Address, true)
 
       // Mint some tokens to addr1
       await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
@@ -349,11 +340,28 @@ describe('UCEF3643', function () {
       // Then freeze all tokens
       await token.connect(agent).freezePartialTokens(addr2Address, ethers.parseEther('1000'))
       // Set up mock to disallow transfers to addr2
-      await mockCompliance.setCanTransfer(false)
+      await mockCompliance.setCanTransfer(addr1Address, false)
       // Try to transfer to addr2
       await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
         'Transfer not possible',
       )
+    })
+
+    it('Should respect per-address transfer permissions', async function () {
+      // Initially addr1 should be able to transfer
+      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('50'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('50'))
+
+      // Disable transfers for addr1
+      await mockCompliance.setCanTransfer(addr1Address, false)
+      await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
+        'Transfer not possible',
+      )
+
+      // Enable transfers for addr1 again
+      await mockCompliance.setCanTransfer(addr1Address, true)
+      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('150'))
     })
   })
 
@@ -363,13 +371,10 @@ describe('UCEF3643', function () {
       await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
       await mockIdentityRegistry.setVerified(addr1Address, true)
 
-      // Set up mock to allow minting and transfers
-      await mockCompliance.setCanMint(true)
-      await mockCompliance.setCanTransfer(true)
+      // Set up mock to allow transfers
+      await mockCompliance.setCanTransfer(addr1Address, true)
 
-      // Unpause the token
-      await token.connect(agent).unpause()
-
+      await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
       await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
       await mockIdentityRegistry.setVerified(addr2Address, true)
     })
@@ -386,14 +391,12 @@ describe('UCEF3643', function () {
       await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
       await mockIdentityRegistry.setVerified(addr1Address, true)
 
-      // Set up mock to allow minting and transfers
-      await mockCompliance.setCanMint(true)
-      await mockCompliance.setCanTransfer(true)
-
-      // Unpause the token
-      await token.connect(agent).unpause()
+      // Set up mock to allow transfers
+      await mockCompliance.setCanTransfer(addr1Address, true)
+      await mockCompliance.setCanTransfer(addr2Address, true)
 
       await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
+      // await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
     })
 
     it('Should freeze tokens', async function () {
@@ -411,12 +414,8 @@ describe('UCEF3643', function () {
       await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
       await mockIdentityRegistry.setVerified(addr1Address, true)
 
-      // Set up mock to allow minting and transfers
-      await mockCompliance.setCanMint(true)
-      await mockCompliance.setCanTransfer(true)
-
-      // Unpause the token
-      await token.connect(agent).unpause()
+      // Set up mock to allow address 1 to transfer / burn tokens
+      await mockCompliance.setCanTransfer(addr1Address, true)
 
       await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
     })
