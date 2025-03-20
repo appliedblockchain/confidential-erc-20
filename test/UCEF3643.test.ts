@@ -248,6 +248,13 @@ describe('UCEF3643', function () {
       await token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))
       expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('150'))
     })
+
+    it('Should not allow transfer if token is paused', async function () {
+      await token.connect(agent).pause()
+      await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
+        'Pausable: paused',
+      )
+    })
   })
 
   describe('Forced Transfers', function () {
@@ -299,6 +306,12 @@ describe('UCEF3643', function () {
       await expect(
         token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('600')),
       ).to.be.revertedWith('Transfer not possible')
+    })
+
+    it('Should force transfer if token is paused', async function () {
+      await token.connect(agent).pause()
+      await token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('100'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('100'))
     })
   })
 
@@ -545,6 +558,13 @@ describe('UCEF3643', function () {
         // await expect(token.connect(addr2).transferFrom(addr1Address, addr2Address, 1n)).to.be.revertedWith(
         //   'ERC20: insufficient allowance',
         // )
+      })
+
+      it('Should not allow transfer if token is paused', async function () {
+        await token.connect(agent).pause()
+        await expect(
+          token.connect(addr2).transferFrom(addr1Address, addr2Address, ALLOWANCE_AMOUNT),
+        ).to.be.revertedWith('Pausable: paused')
       })
     })
   })
