@@ -35,9 +35,18 @@ importers:
       '@nomicfoundation/ignition-core':
         specifier: ^0.15.0
         version: 0.15.10
+      '@onchain-id/solidity':
+        specifier: ^2.2.1
+        version: 2.2.1
       '@openzeppelin/contracts':
         specifier: 5.2.0
         version: 5.2.0
+      '@openzeppelin/contracts-upgradeable':
+        specifier: 4.9.0
+        version: 4.9.0
+      '@tokenysolutions/t-rex':
+        specifier: 4.1.6
+        version: 4.1.6
       '@typechain/ethers-v6':
         specifier: ^0.5.0
         version: 0.5.1(ethers@6.13.5)(typechain@8.3.2(typescript@5.8.2))(typescript@5.8.2)
@@ -493,6 +502,12 @@ packages:
     resolution: {integrity: sha512-q4n32/FNKIhQ3zQGGw5CvPF6GTvDCpYwIf7bEY/dZTZbgfDsHyjJwURxUJf3VQuuJj+fDIFl4+KkBVbw4Ef6jA==}
     engines: {node: '>= 12'}
 
+  '@onchain-id/solidity@2.2.1':
+    resolution: {integrity: sha512-B54InT8yi89qlh9UVCARcfdQLVDP7Lef87B/Ww2Wn19oyEbPmlWho2EK1sgnrt/8Q0fGX/7y5rDnx3HPy28NTA==, tarball: https://npm.pkg.github.com/download/@onchain-id/solidity/2.2.1/8bfc290ad75a95cf6a9803b786b3532fb9fd8c0a}
+
+  '@openzeppelin/contracts-upgradeable@4.9.0':
+    resolution: {integrity: sha512-+6i2j6vr2fdudTqkBvG+UOosankukxYzg3WN1nqU7ijjQ5A4osWaD3ip6CEz6YvDoSdZgcFVZoiGr7zRlUUoZw==}
+
   '@openzeppelin/contracts@5.2.0':
     resolution: {integrity: sha512-bxjNie5z89W1Ea0NZLZluFh8PrFNn9DH8DQlujEok2yjsOlraUPKID5p1Wk3qdNbf6XkQ1Os2RvfiHrrXLHWKA==}
 
@@ -548,6 +563,9 @@ packages:
 
   '@solidity-parser/parser@0.19.0':
     resolution: {integrity: sha512-RV16k/qIxW/wWc+mLzV3ARyKUaMUTBy9tOLMzFhtNSKYeTAanQ3a5MudJKf/8arIFnA2L27SNjarQKmFg0w/jA==}
+
+  '@tokenysolutions/t-rex@4.1.6':
+    resolution: {integrity: sha512-GNmVAC11cqwF6bmVCl0yhaVfPLBptF4K0vmepghTPbSogky1WG+38h7RR/p7909Si2JgswreeeLZZyBLN0KZrg==, tarball: https://npm.pkg.github.com/download/@TokenySolutions/t-rex/4.1.6/762feee421f5a6c5ec771e1c145cef888ad511f7}
 
   '@tsconfig/node10@1.0.11':
     resolution: {integrity: sha512-DcRjDCujK/kCk/cUe8Xz8ZSpm8mS3mNNpta+jGCA6USEDfktlNvm1+IuZ9eTcDbNk41BHwpHHeW+N1lKCz4zOw==}
@@ -3108,6 +3126,10 @@ snapshots:
       '@nomicfoundation/solidity-analyzer-linux-x64-musl': 0.1.2
       '@nomicfoundation/solidity-analyzer-win32-x64-msvc': 0.1.2
 
+  '@onchain-id/solidity@2.2.1': {}
+
+  '@openzeppelin/contracts-upgradeable@4.9.0': {}
+
   '@openzeppelin/contracts@5.2.0': {}
 
   '@pkgr/core@0.1.1': {}
@@ -3190,6 +3212,8 @@ snapshots:
       antlr4ts: 0.5.0-alpha.4
 
   '@solidity-parser/parser@0.19.0': {}
+
+  '@tokenysolutions/t-rex@4.1.6': {}
 
   '@tsconfig/node10@1.0.11': {}
 
