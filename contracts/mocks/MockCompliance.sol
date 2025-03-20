@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 contract MockCompliance {
-    bool private _canTransfer;
+    mapping(address => bool) private _canTransfer;
     bool private _canMint;
     address private _token;
 
@@ -11,14 +11,7 @@ contract MockCompliance {
         address _to,
         uint256 _amount
     ) external view returns (bool) {
-        return _canTransfer;
-    }
-
-    function canMint(
-        address _to,
-        uint256 _amount
-    ) external view returns (bool) {
-        return _canMint;
+        return _canTransfer[_from];
     }
 
     function transferred(
@@ -34,12 +27,8 @@ contract MockCompliance {
 
     function destroyed(address _userAddress, uint256 _amount) external {}
 
-    function setCanTransfer(bool _status) external {
-        _canTransfer = _status;
-    }
-
-    function setCanMint(bool _status) external {
-        _canMint = _status;
+    function setCanTransfer(address _address, bool _status) external {
+        _canTransfer[_address] = _status;
     }
 
     function setToken(address _tokenAddress) external {
