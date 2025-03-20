@@ -181,6 +181,198 @@ describe('UCEF3643', function () {
     })
   })
 
+  describe('Token Transfers', function () {
+    beforeEach(async function () {
+      // Register and verify addr1 identity
+      await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
+      await mockIdentityRegistry.setVerified(addr1Address, true)
+
+      // Set up mock to allow transfers
+      await mockCompliance.setCanTransfer(addr1Address, true)
+
+      // Mint some tokens to addr1
+      await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
+      // Set up mock to allow transfers
+      await mockIdentityRegistry.setVerified(addr2Address, true)
+    })
+
+    it('Should transfer tokens between accounts', async function () {
+      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('100'))
+    })
+
+    it('Should fail if sender address is frozen', async function () {
+      await token.connect(agent).setAddressFrozen(addr1Address, true)
+      await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
+        'wallet is frozen',
+      )
+    })
+
+    it('Should fail if sender is transferring frozen tokens', async function () {
+      await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('1000'))
+      await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
+        'Insufficient Balance',
+      )
+    })
+
+    it('Should respect per-address transfer compliance', async function () {
+      // Initially addr1 should be able to transfer
+      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('50'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('50'))
+
+      // Disable transfers for addr1
+      await mockCompliance.setCanTransfer(addr1Address, false)
+      await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
+        'Transfer not possible',
+      )
+
+      // Enable transfers for addr1 again
+      await mockCompliance.setCanTransfer(addr1Address, true)
+      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('150'))
+    })
+
+    it('Should respect per-address identity verification', async function () {
+      // Initially addr1 should be able to transfer
+      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('50'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('50'))
+
+      // Set addr2 identity to unverified
+      await mockIdentityRegistry.setVerified(addr2Address, false)
+      await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
+        'Transfer not possible',
+      )
+
+      // Restore addr1 identity verification
+      await mockIdentityRegistry.setVerified(addr2Address, true)
+      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('150'))
+    })
+  })
+
+  describe('Forced Transfers', function () {
+    beforeEach(async function () {
+      // Register and verify addr1 identity
+      await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
+      await mockIdentityRegistry.setVerified(addr1Address, true)
+
+      // Set up mock to allow transfers
+      await mockCompliance.setCanTransfer(addr1Address, true)
+
+      await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
+      await mockIdentityRegistry.setVerified(addr2Address, true)
+    })
+
+    it('Should allow agent to force transfer tokens', async function () {
+      await token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('100'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('100'))
+    })
+
+    it('Should revert if sender is not agent', async function () {
+      await expect(
+        token.connect(addr1).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('100')),
+      ).to.be.revertedWith('AgentRole: caller does not have the Agent role')
+    })
+
+    it('Should revert if not enough balance', async function () {
+      await expect(
+        token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('1001')),
+      ).to.be.revertedWith('sender balance too low')
+    })
+
+    it('Should allow agent to force transfer if tokens are not frozen', async function () {
+      await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('500'))
+      await token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('100'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('100'))
+    })
+
+    it('Should allow agent to force transfer if tokens are frozen but to address is verified', async function () {
+      await mockIdentityRegistry.setVerified(addr2Address, true)
+      await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('500'))
+      await token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('600'))
+      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('600'))
+    })
+
+    it('Should revert to force transfer if tokens are frozen but to address is not verified', async function () {
+      await mockIdentityRegistry.setVerified(addr2Address, false)
+      await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('500'))
+      await expect(
+        token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('600')),
+      ).to.be.revertedWith('Transfer not possible')
+    })
+  })
+
+  describe('Token Burning', function () {
+    beforeEach(async function () {
+      // Register and verify addr1 identity
+      await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
+      await mockIdentityRegistry.setVerified(addr1Address, true)
+
+      // Set up mock to allow address 1 to transfer / burn tokens
+      await mockCompliance.setCanTransfer(addr1Address, true)
+
+      await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
+    })
+
+    it('Should burn tokens', async function () {
+      await token.connect(agent).burn(addr1Address, ethers.parseEther('500'))
+      expect(await token.connect(addr1).balanceOf(addr1Address)).to.equal(ethers.parseEther('500'))
+    })
+
+    it('Should revert if sender is not agent', async function () {
+      await expect(token.connect(addr1).burn(addr1Address, ethers.parseEther('500'))).to.be.revertedWith(
+        'AgentRole: caller does not have the Agent role',
+      )
+    })
+
+    it('Should revert if not enough balance', async function () {
+      await expect(token.connect(agent).burn(addr1Address, ethers.parseEther('1001'))).to.be.revertedWith(
+        'cannot burn more than balance',
+      )
+    })
+
+    it('Should burn tokens even though they are frozen', async function () {
+      await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('500'))
+      await token.connect(agent).burn(addr1Address, ethers.parseEther('600'))
+      expect(await token.connect(addr1).balanceOf(addr1Address)).to.equal(ethers.parseEther('400'))
+    })
+  })
+
+  describe('Token Minting', function () {
+    beforeEach(async function () {
+      // Register and verify addr1 identity
+      await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
+
+      // Set up mock to allow address 1 to transfer / burn tokens
+      await mockCompliance.setCanTransfer(addr1Address, true)
+    })
+
+    it('Should mint tokens', async function () {
+      await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
+      expect(await token.connect(addr1).balanceOf(addr1Address)).to.equal(ethers.parseEther('1000'))
+    })
+
+    it('Should revert if sender is not agent', async function () {
+      await expect(token.connect(addr1).mint(addr1Address, ethers.parseEther('1000'))).to.be.revertedWith(
+        'AgentRole: caller does not have the Agent role',
+      )
+    })
+
+    it('Should revert if to address is not verified', async function () {
+      await mockIdentityRegistry.setVerified(addr1Address, false)
+      await expect(token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))).to.be.revertedWith(
+        'Identity is not verified.',
+      )
+    })
+
+    it('Should revert if mint is disabled by compliance', async function () {
+      await mockCompliance.setCanTransfer(ethers.ZeroAddress, false)
+      await expect(token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))).to.be.revertedWith(
+        'Compliance not followed',
+      )
+    })
+  })
+
   describe('Allowances', function () {
     const ALLOWANCE_AMOUNT = ethers.parseEther('100')
 
@@ -250,6 +442,28 @@ describe('UCEF3643', function () {
         const allowance = await token.connect(addr1).allowance(addr1Address, addr2Address)
         expect(allowance).to.equal(newAllowance)
       })
+
+      it('Should increase allowance', async function () {
+        // Set initial allowance
+        await token.connect(addr1).approve(addr2Address, ALLOWANCE_AMOUNT)
+
+        // Increase allowance
+        await token.connect(addr1).increaseAllowance(addr2Address, ALLOWANCE_AMOUNT)
+
+        const allowance = await token.connect(addr1).allowance(addr1Address, addr2Address)
+        expect(allowance).to.equal(ALLOWANCE_AMOUNT * 2n)
+      })
+
+      it('Should decrease allowance', async function () {
+        // Set initial allowance
+        await token.connect(addr1).approve(addr2Address, ALLOWANCE_AMOUNT)
+
+        // Decrease allowance
+        await token.connect(addr1).decreaseAllowance(addr2Address, ALLOWANCE_AMOUNT)
+
+        const allowance = await token.connect(addr1).allowance(addr1Address, addr2Address)
+        expect(allowance).to.equal(0n)
+      })
     })
 
     describe('Using Allowances', function () {
@@ -279,6 +493,34 @@ describe('UCEF3643', function () {
       //   )
       // })
 
+      it('Should revert if account is frozen', async function () {
+        await token.connect(agent).setAddressFrozen(addr1Address, true)
+        await expect(
+          token.connect(addr2).transferFrom(addr1Address, addr2Address, ALLOWANCE_AMOUNT),
+        ).to.be.revertedWith('wallet is frozen')
+      })
+
+      it('Should revert if to account is frozen', async function () {
+        await token.connect(agent).setAddressFrozen(addr2Address, true)
+        await expect(
+          token.connect(addr2).transferFrom(addr1Address, addr2Address, ALLOWANCE_AMOUNT),
+        ).to.be.revertedWith('wallet is frozen')
+      })
+
+      it('Should revert if to account is not verified', async function () {
+        await mockIdentityRegistry.setVerified(addr2Address, false)
+        await expect(
+          token.connect(addr2).transferFrom(addr1Address, addr2Address, ALLOWANCE_AMOUNT),
+        ).to.be.revertedWith('Transfer not possible')
+      })
+
+      it('Should revert if rejected by compliance', async function () {
+        await mockCompliance.setCanTransfer(addr1Address, false)
+        await expect(
+          token.connect(addr2).transferFrom(addr1Address, addr2Address, ALLOWANCE_AMOUNT),
+        ).to.be.revertedWith('Transfer not possible')
+      })
+
       it('Should handle infinite allowance correctly', async function () {
         const infiniteAllowance = ethers.MaxUint256
 
@@ -304,125 +546,6 @@ describe('UCEF3643', function () {
         //   'ERC20: insufficient allowance',
         // )
       })
-    })
-  })
-
-  describe('Token Transfers', function () {
-    beforeEach(async function () {
-      // Register and verify addr1 identity
-      await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
-      await mockIdentityRegistry.setVerified(addr1Address, true)
-
-      // Set up mock to allow transfers
-      await mockCompliance.setCanTransfer(addr1Address, true)
-
-      // Mint some tokens to addr1
-      await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
-      // Set up mock to allow transfers
-      await mockIdentityRegistry.setVerified(addr2Address, true)
-    })
-
-    it('Should transfer tokens between accounts', async function () {
-      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))
-      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('100'))
-    })
-
-    it('Should fail if sender is frozen', async function () {
-      await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('1000'))
-      await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
-        'Insufficient Balance',
-      )
-    })
-
-    it('Should fail if receiver is frozen', async function () {
-      // First mint tokens to addr2
-      await token.connect(agent).mint(addr2Address, ethers.parseEther('1000'))
-      // Then freeze all tokens
-      await token.connect(agent).freezePartialTokens(addr2Address, ethers.parseEther('1000'))
-      // Set up mock to disallow transfers to addr2
-      await mockCompliance.setCanTransfer(addr1Address, false)
-      // Try to transfer to addr2
-      await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
-        'Transfer not possible',
-      )
-    })
-
-    it('Should respect per-address transfer permissions', async function () {
-      // Initially addr1 should be able to transfer
-      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('50'))
-      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('50'))
-
-      // Disable transfers for addr1
-      await mockCompliance.setCanTransfer(addr1Address, false)
-      await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))).to.be.revertedWith(
-        'Transfer not possible',
-      )
-
-      // Enable transfers for addr1 again
-      await mockCompliance.setCanTransfer(addr1Address, true)
-      await token.connect(addr1).transfer(addr2Address, ethers.parseEther('100'))
-      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('150'))
-    })
-  })
-
-  describe('Forced Transfers', function () {
-    beforeEach(async function () {
-      // Register and verify addr1 identity
-      await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
-      await mockIdentityRegistry.setVerified(addr1Address, true)
-
-      // Set up mock to allow transfers
-      await mockCompliance.setCanTransfer(addr1Address, true)
-
-      await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
-      await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
-      await mockIdentityRegistry.setVerified(addr2Address, true)
-    })
-
-    it('Should allow agent to force transfer tokens', async function () {
-      await token.connect(agent).forcedTransfer(addr1Address, addr2Address, ethers.parseEther('100'))
-      expect(await token.connect(addr2).balanceOf(addr2Address)).to.equal(ethers.parseEther('100'))
-    })
-  })
-
-  describe('Token Freezing', function () {
-    beforeEach(async function () {
-      // Register and verify addr1 identity
-      await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
-      await mockIdentityRegistry.setVerified(addr1Address, true)
-
-      // Set up mock to allow transfers
-      await mockCompliance.setCanTransfer(addr1Address, true)
-      await mockCompliance.setCanTransfer(addr2Address, true)
-
-      await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
-      // await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
-    })
-
-    it('Should freeze tokens', async function () {
-      await token.connect(agent).freezePartialTokens(addr1Address, ethers.parseEther('500'))
-      // Try to transfer the frozen tokens
-      await expect(token.connect(addr1).transfer(addr2Address, ethers.parseEther('600'))).to.be.revertedWith(
-        'Insufficient Balance',
-      )
-    })
-  })
-
-  describe('Token Burning', function () {
-    beforeEach(async function () {
-      // Register and verify addr1 identity
-      await mockIdentityRegistry.registerIdentity(addr1Address, 1, true)
-      await mockIdentityRegistry.setVerified(addr1Address, true)
-
-      // Set up mock to allow address 1 to transfer / burn tokens
-      await mockCompliance.setCanTransfer(addr1Address, true)
-
-      await token.connect(agent).mint(addr1Address, ethers.parseEther('1000'))
-    })
-
-    it('Should burn tokens', async function () {
-      await token.connect(agent).burn(addr1Address, ethers.parseEther('500'))
-      expect(await token.connect(addr1).balanceOf(addr1Address)).to.equal(ethers.parseEther('500'))
     })
   })
 })
