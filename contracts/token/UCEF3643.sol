@@ -36,7 +36,7 @@ contract UCEF3643 is Token {
      * @custom:error UCEFUnauthorizedBalanceAccess Thrown when an unauthorized address attempts to view the allowance
      */
     function allowance(address owner, address spender) public view virtual override returns (uint256) {
-        require(msg.sender == owner || msg.sender == spender, "Unauthorized balance access");
+        require(msg.sender == owner || msg.sender == spender, "Unauthorized allowance access");
         return _allowance(owner, spender);
     }
 
