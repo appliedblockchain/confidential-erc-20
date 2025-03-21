@@ -445,7 +445,7 @@ describe('UCEF3643', function () {
 
       it('Should revert when unauthorized third party tries to view allowance', async function () {
         await expect(token.connect(addr2).allowance(addr1Address, ownerAddress)).to.be.revertedWith(
-          'Unauthorized balance access',
+          'Unauthorized allowance access',
         )
       })
     })
