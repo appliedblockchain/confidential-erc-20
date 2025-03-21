@@ -60,6 +60,8 @@ async function deployIdentityProxy(implementationAuthority: string, managementKe
 }
 
 export async function deployFullSuiteFixture() {
+  console.log('Deploying full suite fixture...')
+  console.log('1/15 Getting signers...')
   const [
     deployer,
     tokenIssuer,
@@ -76,6 +78,7 @@ export async function deployFullSuiteFixture() {
   const aliceActionKey = ethers.Wallet.createRandom()
 
   // Deploy implementations
+  console.log('2/15 Deploying implementations...')
   const claimTopicsRegistryImplementation = await deployContract<ClaimTopicsRegistry>('ClaimTopicsRegistry', deployer)
   const trustedIssuersRegistryImplementation = await deployContract<TrustedIssuersRegistry>(
     'TrustedIssuersRegistry',
@@ -87,7 +90,7 @@ export async function deployFullSuiteFixture() {
   )
   const identityRegistryImplementation = await deployContract<IdentityRegistry>('IdentityRegistry', deployer)
   const modularComplianceImplementation = await deployContract<ModularCompliance>('ModularCompliance', deployer)
-  const tokenImplementation = await deployContract<Token>('Token', deployer)
+  const tokenImplementation = await deployContract<Token>('UCEF3643', deployer)
 
   const identityImplementation = await deployContractWithAbi(
     OnchainID.contracts.Identity.abi,
@@ -133,6 +136,7 @@ export async function deployFullSuiteFixture() {
 
   await trexImplementationAuthority.connect(deployer).addAndUseTREXVersion(versionStruct, contractsStruct)
 
+  console.log('3/15 Deploying factory...')
   const trexFactory = await deployContract<TREXFactory>('TREXFactory', deployer, [
     await trexImplementationAuthority.getAddress(),
     await identityFactory.getAddress(),
@@ -141,6 +145,7 @@ export async function deployFullSuiteFixture() {
 
   const trexImplementationAuthorityAddress = await trexImplementationAuthority.getAddress()
 
+  console.log('4/15 Deploying Registry Proxies...')
   const claimTopicsRegistry = await deployContract<ClaimTopicsRegistry>(
     'ClaimTopicsRegistryProxy',
     deployer,
@@ -176,6 +181,7 @@ export async function deployFullSuiteFixture() {
     'IdentityRegistry',
   )
 
+  console.log('5/15 Deploying Token Proxy...')
   const tokenOID = await deployIdentityProxy(identityImplementationAuthorityAddress, tokenIssuer.address, deployer)
   const tokenName = 'TREXDINO'
   const tokenSymbol = 'TREX'
@@ -192,18 +198,21 @@ export async function deployFullSuiteFixture() {
       tokenDecimals,
       await tokenOID.getAddress(),
     ],
-    'Token',
+    'UCEF3643',
   )
 
+  console.log('6/15 Binding Identity Registry...')
   await identityRegistryStorage.connect(deployer).bindIdentityRegistry(await identityRegistry.getAddress())
 
   await token.connect(deployer).addAgent(tokenAgent.address)
 
+  console.log('7/15 Adding Claim Topic...')
   const claimTopics = [ethers.id('CLAIM_TOPIC')]
   await claimTopicsRegistry.connect(deployer).addClaimTopic(claimTopics[0])
 
   const claimIssuerContract = await deployContract<ClaimIssuer>('ClaimIssuer', claimIssuer, [claimIssuer.address])
 
+  console.log('8/15 Adding Claim Issuer Key...')
   await claimIssuerContract
     .connect(claimIssuer)
     .addKey(
@@ -212,8 +221,10 @@ export async function deployFullSuiteFixture() {
       1,
     )
 
+  console.log('9/15 Adding Trusted Issuer...')
   await trustedIssuersRegistry.connect(deployer).addTrustedIssuer(await claimIssuerContract.getAddress(), claimTopics)
 
+  console.log('10/15 Deploying Identities...')
   const aliceIdentity = await deployIdentityProxy(identityImplementationAuthorityAddress, aliceWallet.address, deployer)
   await aliceIdentity
     .connect(aliceWallet)
@@ -232,6 +243,7 @@ export async function deployFullSuiteFixture() {
   await identityRegistry.connect(deployer).addAgent(tokenAgent.address)
   await identityRegistry.connect(deployer).addAgent(await token.getAddress())
 
+  console.log('11/15 Batch Registering Identities...')
   await identityRegistry
     .connect(tokenAgent)
     .batchRegisterIdentity(
@@ -240,6 +252,7 @@ export async function deployFullSuiteFixture() {
       [42, 666],
     )
 
+  console.log('12/15 Adding Claim for Alice...')
   const claimForAlice = {
     data: ethers.hexlify(ethers.toUtf8Bytes('Some claim public data.')),
     issuer: await claimIssuerContract.getAddress(),
@@ -270,6 +283,7 @@ export async function deployFullSuiteFixture() {
       '',
     )
 
+  console.log('13/15 Adding Claim for Bob...')
   const claimForBob = {
     data: ethers.hexlify(ethers.toUtf8Bytes('Some claim public data.')),
     issuer: await claimIssuerContract.getAddress(),
@@ -293,10 +307,14 @@ export async function deployFullSuiteFixture() {
     .connect(bobWallet)
     .addClaim(claimForBob.topic, claimForBob.scheme, claimForBob.issuer, claimForBob.signature, claimForBob.data, '')
 
+  console.log('14/15 Minting tokens...')
   await token.connect(tokenAgent).mint(aliceWallet.address, 1000)
   await token.connect(tokenAgent).mint(bobWallet.address, 500)
 
+  console.log('15/15 Unpausing token...')
   await token.connect(tokenAgent).unpause()
+
+  console.log('Full suite fixture deployed successfully!')
 
   return {
     accounts: {
