@@ -18,8 +18,8 @@ function exportAccounts(accounts: Record<string, { address: string; privateKey?:
 ;(async () => {
   const result = await main({
     // suiteFilePath: 'SDSuiteDeployment.json',
-    skipClaimIssuer: false,
-    skipIdentities: false,
+    // skipClaimIssuer: true,
+    // skipIdentities: false,
   })
 
   if (result) {

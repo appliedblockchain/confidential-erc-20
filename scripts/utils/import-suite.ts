@@ -110,7 +110,7 @@ export async function importSuite(filePath: string): Promise<ImportedSuite> {
   for (const account of suiteJson.accounts) {
     const [name, details] = Object.entries(account)[0] as [string, { address: string; privateKey?: string }]
     if (details.privateKey) {
-      signers[name] = new ethers.Wallet(details.privateKey)
+      signers[name] = new ethers.Wallet(details.privateKey, ethers.provider)
     } else {
       signers[name] = await ethers.getSigner(details.address)
     }

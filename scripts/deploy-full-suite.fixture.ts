@@ -80,16 +80,16 @@ async function getSigners() {
   ] = await ethers.getSigners()
 
   return {
-    deployer: deployer || ethers.Wallet.createRandom(),
-    tokenIssuer: tokenIssuer || ethers.Wallet.createRandom(),
-    tokenAgent: tokenAgent || ethers.Wallet.createRandom(),
-    tokenAdmin: tokenAdmin || ethers.Wallet.createRandom(),
-    claimIssuer: claimIssuer || ethers.Wallet.createRandom(),
-    aliceWallet: aliceWallet || ethers.Wallet.createRandom(),
-    bobWallet: bobWallet || ethers.Wallet.createRandom(),
-    charlieWallet: charlieWallet || ethers.Wallet.createRandom(),
-    davidWallet: davidWallet || ethers.Wallet.createRandom(),
-    anotherWallet: anotherWallet || ethers.Wallet.createRandom(),
+    deployer: deployer || ethers.Wallet.createRandom(ethers.provider),
+    tokenIssuer: tokenIssuer || ethers.Wallet.createRandom(ethers.provider),
+    tokenAgent: tokenAgent || ethers.Wallet.createRandom(ethers.provider),
+    tokenAdmin: tokenAdmin || ethers.Wallet.createRandom(ethers.provider),
+    claimIssuer: claimIssuer || ethers.Wallet.createRandom(ethers.provider),
+    aliceWallet: aliceWallet || ethers.Wallet.createRandom(ethers.provider),
+    bobWallet: bobWallet || ethers.Wallet.createRandom(ethers.provider),
+    charlieWallet: charlieWallet || ethers.Wallet.createRandom(ethers.provider),
+    davidWallet: davidWallet || ethers.Wallet.createRandom(ethers.provider),
+    anotherWallet: anotherWallet || ethers.Wallet.createRandom(ethers.provider),
   } as any
 }
 
