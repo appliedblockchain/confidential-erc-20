@@ -1,16 +1,39 @@
-import { deployFullSuiteFixture } from './deploy-full-suite.fixture'
-;(async () => {
-  const result = await deployFullSuiteFixture()
+import fs from 'fs'
+import { main } from './deploy-full-suite.fixture'
+const exportPrivateKeys = process.env.EXPORT_PRIVATE_KEYS === 'true'
 
-  console.log(
-    JSON.stringify(
+function exportAccounts(accounts: Record<string, { address: string; privateKey?: string }>, exportPrivateKey = false) {
+  return Object.entries(accounts)
+    .filter(([_, account]) => account.address)
+    .map(([name, account]) => {
+      return {
+        [name]: {
+          address: account.address,
+          ...(exportPrivateKey && { privateKey: account.privateKey }),
+        },
+      }
+    })
+}
+
+;(async () => {
+  const result = await main({
+    // suiteFilePath: 'SDSuiteDeployment.json',
+    skipClaimIssuer: false,
+    skipIdentities: false,
+  })
+
+  if (result) {
+    const content = JSON.stringify(
       {
         suite: {
-          claimIssuerContract: await result.suite.claimIssuerContract.getAddress(),
+          claimIssuerContract: await result.suite.claimIssuerContract?.getAddress(),
           claimTopicsRegistry: await result.suite.claimTopicsRegistry.getAddress(),
           trustedIssuersRegistry: await result.suite.trustedIssuersRegistry.getAddress(),
           identityRegistryStorage: await result.suite.identityRegistryStorage.getAddress(),
+          defaultCompliance: await result.suite.defaultCompliance.getAddress(),
           identityRegistry: await result.suite.identityRegistry.getAddress(),
+          tokenOID: await result.suite.tokenOID.getAddress(),
+          token: await result.suite.token.getAddress(),
         },
         authorities: {
           identityImplementationAuthority: await result.authorities.identityImplementationAuthority.getAddress(),
@@ -32,21 +55,19 @@ import { deployFullSuiteFixture } from './deploy-full-suite.fixture'
           modularComplianceImplementation: await result.implementations.modularComplianceImplementation.getAddress(),
           tokenImplementation: await result.implementations.tokenImplementation.getAddress(),
         },
-        accounts: {
-          deployer: result.accounts.deployer.address,
-          tokenIssuer: result.accounts.tokenIssuer.address,
-          tokenAgent: result.accounts.tokenAgent.address,
-          tokenAdmin: result.accounts.tokenAdmin.address,
-          claimIssuer: result.accounts.claimIssuer.address,
-          claimIssuerSigningKey: result.accounts.claimIssuerSigningKey.address,
-          aliceActionKey: result.accounts.aliceActionKey.address,
-          aliceWallet: result.accounts.aliceWallet.address,
-          bobWallet: result.accounts.bobWallet.address,
-          charlieWallet: result.accounts.charlieWallet.address,
-        },
+        identities: result.identities
+          ? {
+              aliceIdentity: await result.identities.aliceIdentity.getAddress(),
+              bobIdentity: await result.identities.bobIdentity.getAddress(),
+              charlieIdentity: await result.identities.charlieIdentity.getAddress(),
+            }
+          : undefined,
+        accounts: exportAccounts(result.accounts as any, exportPrivateKeys),
       },
       null,
       2,
-    ),
-  )
+    )
+
+    fs.writeFileSync('DeploymentOutput.json', content)
+  }
 })()

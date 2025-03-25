@@ -4,8 +4,9 @@
  * https://github.com/TokenySolutions/T-REX/blob/main/test/fixtures/deploy-full-suite.fixture.ts
  */
 
-import { BaseContract, Signer } from 'ethers'
+import { BaseContract, ContractTransactionResponse, Signer } from 'ethers'
 import { ethers } from 'hardhat'
+import pc from 'picocolors'
 import OnchainID from '@onchain-id/solidity'
 import {
   ClaimTopicsRegistry,
@@ -21,6 +22,7 @@ import {
   ClaimIssuer,
   Identity,
 } from '../typechain-types'
+import { ImportedSuite, importSuite } from './utils/import-suite'
 
 async function deployContract<T extends BaseContract>(
   name: string,
@@ -37,31 +39,33 @@ async function deployContract<T extends BaseContract>(
 }
 
 async function deployContractWithAbi<T extends BaseContract>(
-  abi: any,
-  bytecode: any,
+  artifacts: { abi: any; bytecode: any; contractName: string },
   signer: Signer,
   args: any[] = [],
 ) {
+  const { abi, bytecode, contractName } = artifacts
   const factory = new ethers.ContractFactory(abi, bytecode, signer)
   const contract = await factory.deploy(...args)
 
-  return contract as unknown as Promise<T>
+  await contract.waitForDeployment()
+
+  return ethers.getContractAt(contractName, await contract.getAddress(), signer) as unknown as Promise<T>
 }
 
 async function deployIdentityProxy(implementationAuthority: string, managementKey: string, signer: Signer) {
-  const identityProxy = await deployContractWithAbi<Identity>(
-    OnchainID.contracts.IdentityProxy.abi,
-    OnchainID.contracts.IdentityProxy.bytecode,
-    signer,
-    [implementationAuthority, managementKey],
-  )
+  const identityProxy = await deployContractWithAbi<Identity>(OnchainID.contracts.IdentityProxy, signer, [
+    implementationAuthority,
+    managementKey,
+  ])
 
   return ethers.getContractAt('Identity', await identityProxy.getAddress(), signer) as unknown as Promise<Identity>
 }
 
-export async function deployFullSuiteFixture() {
-  console.log('Deploying full suite fixture...')
-  console.log('1/15 Getting signers...')
+async function waitTx(tx: ContractTransactionResponse) {
+  return tx.wait()
+}
+
+async function getSigners() {
   const [
     deployer,
     tokenIssuer,
@@ -74,46 +78,75 @@ export async function deployFullSuiteFixture() {
     davidWallet,
     anotherWallet,
   ] = await ethers.getSigners()
-  const claimIssuerSigningKey = ethers.Wallet.createRandom()
-  const aliceActionKey = ethers.Wallet.createRandom()
+
+  return {
+    deployer: deployer || ethers.Wallet.createRandom(),
+    tokenIssuer: tokenIssuer || ethers.Wallet.createRandom(),
+    tokenAgent: tokenAgent || ethers.Wallet.createRandom(),
+    tokenAdmin: tokenAdmin || ethers.Wallet.createRandom(),
+    claimIssuer: claimIssuer || ethers.Wallet.createRandom(),
+    aliceWallet: aliceWallet || ethers.Wallet.createRandom(),
+    bobWallet: bobWallet || ethers.Wallet.createRandom(),
+    charlieWallet: charlieWallet || ethers.Wallet.createRandom(),
+    davidWallet: davidWallet || ethers.Wallet.createRandom(),
+    anotherWallet: anotherWallet || ethers.Wallet.createRandom(),
+  } as any
+}
+
+export async function deployBasicSuite(signers: any) {
+  const {
+    deployer,
+    tokenIssuer,
+    tokenAgent,
+    tokenAdmin,
+    claimIssuer,
+    aliceWallet,
+    bobWallet,
+    charlieWallet,
+    davidWallet,
+    anotherWallet,
+  } = signers
 
   // Deploy implementations
-  console.log('2/15 Deploying implementations...')
+  console.log(pc.yellow('2/15 Deploying implementations...'))
+  console.log(pc.gray('ClaimTopicsRegistry'))
   const claimTopicsRegistryImplementation = await deployContract<ClaimTopicsRegistry>('ClaimTopicsRegistry', deployer)
+  console.log(pc.gray('TrustedIssuersRegistry'))
   const trustedIssuersRegistryImplementation = await deployContract<TrustedIssuersRegistry>(
     'TrustedIssuersRegistry',
     deployer,
   )
+  console.log(pc.gray('IdentityRegistryStorage'))
   const identityRegistryStorageImplementation = await deployContract<IdentityRegistryStorage>(
     'IdentityRegistryStorage',
     deployer,
   )
+  console.log(pc.gray('IdentityRegistry'))
   const identityRegistryImplementation = await deployContract<IdentityRegistry>('IdentityRegistry', deployer)
+  console.log(pc.gray('ModularCompliance'))
   const modularComplianceImplementation = await deployContract<ModularCompliance>('ModularCompliance', deployer)
+  console.log(pc.gray('Token'))
   const tokenImplementation = await deployContract<Token>('UCEF3643', deployer)
+  console.log(pc.gray('Identity'))
+  const identityImplementation = await deployContractWithAbi(OnchainID.contracts.Identity, deployer, [
+    await deployer.getAddress(),
+    true,
+  ])
 
-  const identityImplementation = await deployContractWithAbi(
-    OnchainID.contracts.Identity.abi,
-    OnchainID.contracts.Identity.bytecode,
-    deployer,
-    [await deployer.getAddress(), true],
-  )
-
+  console.log(pc.gray('IdentityImplementationAuthority'))
   const identityImplementationAuthority = await deployContractWithAbi(
-    OnchainID.contracts.ImplementationAuthority.abi,
-    OnchainID.contracts.ImplementationAuthority.bytecode,
+    OnchainID.contracts.ImplementationAuthority,
     deployer,
     [await identityImplementation.getAddress()],
   )
   const identityImplementationAuthorityAddress = await identityImplementationAuthority.getAddress()
 
-  const identityFactory = await deployContractWithAbi<IdFactory>(
-    OnchainID.contracts.Factory.abi,
-    OnchainID.contracts.Factory.bytecode,
-    deployer,
-    [identityImplementationAuthorityAddress],
-  )
+  console.log(pc.gray('IdentityFactory'))
+  const identityFactory = await deployContractWithAbi<IdFactory>(OnchainID.contracts.Factory, deployer, [
+    identityImplementationAuthorityAddress,
+  ])
 
+  console.log(pc.gray('TREXImplementationAuthority'))
   const trexImplementationAuthority = await deployContract<TREXImplementationAuthority>(
     'TREXImplementationAuthority',
     deployer,
@@ -134,41 +167,42 @@ export async function deployFullSuiteFixture() {
     mcImplementation: await modularComplianceImplementation.getAddress(),
   }
 
-  await trexImplementationAuthority.connect(deployer).addAndUseTREXVersion(versionStruct, contractsStruct)
+  await waitTx(await trexImplementationAuthority.connect(deployer).addAndUseTREXVersion(versionStruct, contractsStruct))
 
-  console.log('3/15 Deploying factory...')
+  console.log(pc.yellow('3/15 Deploying factory...'))
   const trexFactory = await deployContract<TREXFactory>('TREXFactory', deployer, [
     await trexImplementationAuthority.getAddress(),
     await identityFactory.getAddress(),
   ])
-  await identityFactory.connect(deployer).addTokenFactory(await trexFactory.getAddress())
+  await waitTx(await identityFactory.connect(deployer).addTokenFactory(await trexFactory.getAddress()))
 
   const trexImplementationAuthorityAddress = await trexImplementationAuthority.getAddress()
 
-  console.log('4/15 Deploying Registry Proxies...')
+  console.log(pc.yellow('4/15 Deploying Registry Proxies...'))
+  console.log(pc.gray('ClaimTopicsRegistry'))
   const claimTopicsRegistry = await deployContract<ClaimTopicsRegistry>(
     'ClaimTopicsRegistryProxy',
     deployer,
     [trexImplementationAuthorityAddress],
     'ClaimTopicsRegistry',
   )
-
+  console.log(pc.gray('TrustedIssuersRegistry'))
   const trustedIssuersRegistry = await deployContract<TrustedIssuersRegistry>(
     'TrustedIssuersRegistryProxy',
     deployer,
     [trexImplementationAuthorityAddress],
     'TrustedIssuersRegistry',
   )
-
+  console.log(pc.gray('IdentityRegistryStorage'))
   const identityRegistryStorage = await deployContract<IdentityRegistryStorage>(
     'IdentityRegistryStorageProxy',
     deployer,
     [trexImplementationAuthorityAddress],
     'IdentityRegistryStorage',
   )
-
+  console.log(pc.gray('DefaultCompliance'))
   const defaultCompliance = await deployContract<DefaultCompliance>('DefaultCompliance', deployer)
-
+  console.log(pc.gray('IdentityRegistry'))
   const identityRegistry = await deployContract<IdentityRegistry>(
     'IdentityRegistryProxy',
     deployer,
@@ -181,7 +215,7 @@ export async function deployFullSuiteFixture() {
     'IdentityRegistry',
   )
 
-  console.log('5/15 Deploying Token Proxy...')
+  console.log(pc.yellow('5/15 Deploying Token Proxy...'))
   const tokenOID = await deployIdentityProxy(identityImplementationAuthorityAddress, tokenIssuer.address, deployer)
   const tokenName = 'TREXDINO'
   const tokenSymbol = 'TREX'
@@ -201,120 +235,14 @@ export async function deployFullSuiteFixture() {
     'UCEF3643',
   )
 
-  console.log('6/15 Binding Identity Registry...')
-  await identityRegistryStorage.connect(deployer).bindIdentityRegistry(await identityRegistry.getAddress())
-
-  await token.connect(deployer).addAgent(tokenAgent.address)
-
-  console.log('7/15 Adding Claim Topic...')
-  const claimTopics = [ethers.id('CLAIM_TOPIC')]
-  await claimTopicsRegistry.connect(deployer).addClaimTopic(claimTopics[0])
-
-  const claimIssuerContract = await deployContract<ClaimIssuer>('ClaimIssuer', claimIssuer, [claimIssuer.address])
-
-  console.log('8/15 Adding Claim Issuer Key...')
-  await claimIssuerContract
-    .connect(claimIssuer)
-    .addKey(
-      ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [claimIssuerSigningKey.address])),
-      3,
-      1,
-    )
-
-  console.log('9/15 Adding Trusted Issuer...')
-  await trustedIssuersRegistry.connect(deployer).addTrustedIssuer(await claimIssuerContract.getAddress(), claimTopics)
-
-  console.log('10/15 Deploying Identities...')
-  const aliceIdentity = await deployIdentityProxy(identityImplementationAuthorityAddress, aliceWallet.address, deployer)
-  await aliceIdentity
-    .connect(aliceWallet)
-    .addKey(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [aliceActionKey.address])), 2, 1)
-  const aliceIdentityAddress = await aliceIdentity.getAddress()
-
-  const bobIdentity = await deployIdentityProxy(identityImplementationAuthorityAddress, bobWallet.address, deployer)
-  const bobIdentityAddress = await bobIdentity.getAddress()
-
-  const charlieIdentity = await deployIdentityProxy(
-    identityImplementationAuthorityAddress,
-    charlieWallet.address,
-    deployer,
+  console.log(pc.yellow('6/15 Binding Identity Registry...'))
+  await waitTx(
+    await identityRegistryStorage.connect(deployer).bindIdentityRegistry(await identityRegistry.getAddress()),
   )
 
-  await identityRegistry.connect(deployer).addAgent(tokenAgent.address)
-  await identityRegistry.connect(deployer).addAgent(await token.getAddress())
+  await waitTx(await token.connect(deployer).addAgent(tokenAgent.address))
 
-  console.log('11/15 Batch Registering Identities...')
-  await identityRegistry
-    .connect(tokenAgent)
-    .batchRegisterIdentity(
-      [aliceWallet.address, bobWallet.address],
-      [aliceIdentityAddress, bobIdentityAddress],
-      [42, 666],
-    )
-
-  console.log('12/15 Adding Claim for Alice...')
-  const claimForAlice = {
-    data: ethers.hexlify(ethers.toUtf8Bytes('Some claim public data.')),
-    issuer: await claimIssuerContract.getAddress(),
-    topic: claimTopics[0],
-    scheme: 1,
-    identity: aliceIdentityAddress,
-    signature: '',
-  }
-  claimForAlice.signature = await claimIssuerSigningKey.signMessage(
-    ethers.getBytes(
-      ethers.keccak256(
-        ethers.AbiCoder.defaultAbiCoder().encode(
-          ['address', 'uint256', 'bytes'],
-          [claimForAlice.identity, claimForAlice.topic, claimForAlice.data],
-        ),
-      ),
-    ),
-  )
-
-  await aliceIdentity
-    .connect(aliceWallet)
-    .addClaim(
-      claimForAlice.topic,
-      claimForAlice.scheme,
-      claimForAlice.issuer,
-      claimForAlice.signature,
-      claimForAlice.data,
-      '',
-    )
-
-  console.log('13/15 Adding Claim for Bob...')
-  const claimForBob = {
-    data: ethers.hexlify(ethers.toUtf8Bytes('Some claim public data.')),
-    issuer: await claimIssuerContract.getAddress(),
-    topic: claimTopics[0],
-    scheme: 1,
-    identity: bobIdentityAddress,
-    signature: '',
-  }
-  claimForBob.signature = await claimIssuerSigningKey.signMessage(
-    ethers.getBytes(
-      ethers.keccak256(
-        ethers.AbiCoder.defaultAbiCoder().encode(
-          ['address', 'uint256', 'bytes'],
-          [claimForBob.identity, claimForBob.topic, claimForBob.data],
-        ),
-      ),
-    ),
-  )
-
-  await bobIdentity
-    .connect(bobWallet)
-    .addClaim(claimForBob.topic, claimForBob.scheme, claimForBob.issuer, claimForBob.signature, claimForBob.data, '')
-
-  console.log('14/15 Minting tokens...')
-  await token.connect(tokenAgent).mint(aliceWallet.address, 1000)
-  await token.connect(tokenAgent).mint(bobWallet.address, 500)
-
-  console.log('15/15 Unpausing token...')
-  await token.connect(tokenAgent).unpause()
-
-  console.log('Full suite fixture deployed successfully!')
+  console.log(pc.green('Basic suite fixture deployed successfully!'))
 
   return {
     accounts: {
@@ -323,21 +251,13 @@ export async function deployFullSuiteFixture() {
       tokenAgent,
       tokenAdmin,
       claimIssuer,
-      claimIssuerSigningKey,
-      aliceActionKey,
       aliceWallet,
       bobWallet,
       charlieWallet,
       davidWallet,
       anotherWallet,
     },
-    identities: {
-      aliceIdentity,
-      bobIdentity,
-      charlieIdentity,
-    },
     suite: {
-      claimIssuerContract,
       claimTopicsRegistry,
       trustedIssuersRegistry,
       identityRegistryStorage,
@@ -364,4 +284,193 @@ export async function deployFullSuiteFixture() {
       tokenImplementation,
     },
   }
+}
+
+export async function deployClaimIssuer(data: ImportedSuite) {
+  console.log(pc.green('Deploying claim issuer, identities and claims...'))
+
+  const { claimTopicsRegistry, trustedIssuersRegistry } = data.suite
+  const { deployer } = data.accounts as any
+
+  const claimIssuerSigningKey = ethers.Wallet.createRandom()
+  data.accounts.claimIssuerSigningKey = claimIssuerSigningKey
+
+  console.log(pc.yellow('7/15 Adding Claim Topic...'))
+  const claimTopics = [ethers.id('CLAIM_TOPIC')]
+  if ((await claimTopicsRegistry.getClaimTopics()).length === 0) {
+    await waitTx(await claimTopicsRegistry.connect(deployer).addClaimTopic(claimTopics[0]))
+  }
+
+  const claimIssuerContract = await deployContract<ClaimIssuer>('ClaimIssuer', deployer, [await deployer.getAddress()])
+  data.suite.claimIssuerContract = claimIssuerContract
+
+  console.log(pc.yellow('8/15 Adding Claim Issuer Key...'))
+  await claimIssuerContract
+    .connect(deployer)
+    .addKey(
+      ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [claimIssuerSigningKey.address])),
+      3,
+      1,
+    )
+
+  console.log(pc.yellow('9/15 Adding Trusted Issuer...'))
+  await waitTx(
+    await trustedIssuersRegistry
+      .connect(deployer)
+      .addTrustedIssuer(await claimIssuerContract.getAddress(), claimTopics),
+  )
+
+  console.log(pc.green('Claim issuer deployed successfully!'))
+
+  return data
+}
+
+export async function deployIdentities(data: ImportedSuite) {
+  console.log(pc.green('Deploying identities and claims...'))
+  const { token, identityRegistry, claimIssuerContract } = data.suite
+  const { identityImplementationAuthority } = data.authorities
+  const { deployer, aliceWallet, bobWallet, charlieWallet, tokenAgent } = data.accounts as any
+  const claimTopics = [ethers.id('CLAIM_TOPIC')]
+
+  const aliceActionKey = ethers.Wallet.createRandom()
+  data.accounts.aliceActionKey = aliceActionKey
+  const claimIssuerSigningKey = data.accounts.claimIssuerSigningKey || ethers.Wallet.createRandom()
+
+  const identityImplementationAuthorityAddress = await identityImplementationAuthority.getAddress()
+
+  console.log(pc.yellow('10/15 Deploying Identities...'))
+  const aliceIdentity = await deployIdentityProxy(identityImplementationAuthorityAddress, aliceWallet.address, deployer)
+
+  await waitTx(
+    await aliceIdentity
+      .connect(aliceWallet)
+      .addKey(ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address'], [aliceActionKey.address])), 2, 1),
+  )
+  const aliceIdentityAddress = await aliceIdentity.getAddress()
+
+  const bobIdentity = await deployIdentityProxy(identityImplementationAuthorityAddress, bobWallet.address, deployer)
+  const bobIdentityAddress = await bobIdentity.getAddress()
+
+  const charlieIdentity = await deployIdentityProxy(
+    identityImplementationAuthorityAddress,
+    charlieWallet.address,
+    deployer,
+  )
+
+  await waitTx(await identityRegistry.connect(deployer).addAgent(tokenAgent.address))
+  await waitTx(await identityRegistry.connect(deployer).addAgent(await token.getAddress()))
+
+  console.log(pc.yellow('11/15 Batch Registering Identities...'))
+  await waitTx(
+    await identityRegistry
+      .connect(tokenAgent)
+      .batchRegisterIdentity(
+        [aliceWallet.address, bobWallet.address],
+        [aliceIdentityAddress, bobIdentityAddress],
+        [42, 666],
+      ),
+  )
+
+  console.log(pc.yellow('12/15 Adding Claim for Alice...'))
+  const claimForAlice = {
+    data: ethers.hexlify(ethers.toUtf8Bytes('Some claim public data.')),
+    issuer: await claimIssuerContract!.getAddress(),
+    topic: claimTopics[0],
+    scheme: 1,
+    identity: aliceIdentityAddress,
+    signature: '',
+  }
+  claimForAlice.signature = await claimIssuerSigningKey.signMessage(
+    ethers.getBytes(
+      ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['address', 'uint256', 'bytes'],
+          [claimForAlice.identity, claimForAlice.topic, claimForAlice.data],
+        ),
+      ),
+    ),
+  )
+
+  await waitTx(
+    await aliceIdentity
+      .connect(aliceWallet)
+      .addClaim(
+        claimForAlice.topic,
+        claimForAlice.scheme,
+        claimForAlice.issuer,
+        claimForAlice.signature,
+        claimForAlice.data,
+        '',
+      ),
+  )
+
+  console.log(pc.yellow('13/15 Adding Claim for Bob...'))
+  const claimForBob = {
+    data: ethers.hexlify(ethers.toUtf8Bytes('Some claim public data.')),
+    issuer: await claimIssuerContract!.getAddress(),
+    topic: claimTopics[0],
+    scheme: 1,
+    identity: bobIdentityAddress,
+    signature: '',
+  }
+  claimForBob.signature = await claimIssuerSigningKey.signMessage(
+    ethers.getBytes(
+      ethers.keccak256(
+        ethers.AbiCoder.defaultAbiCoder().encode(
+          ['address', 'uint256', 'bytes'],
+          [claimForBob.identity, claimForBob.topic, claimForBob.data],
+        ),
+      ),
+    ),
+  )
+
+  await waitTx(
+    await bobIdentity
+      .connect(bobWallet)
+      .addClaim(claimForBob.topic, claimForBob.scheme, claimForBob.issuer, claimForBob.signature, claimForBob.data, ''),
+  )
+
+  console.log(pc.yellow('14/15 Minting tokens...'))
+  await waitTx(await token.connect(tokenAgent).mint(aliceWallet.address, 1000))
+  await waitTx(await token.connect(tokenAgent).mint(bobWallet.address, 500))
+
+  console.log(pc.yellow('15/15 Unpausing token...'))
+  await waitTx(await token.connect(tokenAgent).unpause())
+
+  data.identities = {
+    aliceIdentity,
+    bobIdentity,
+    charlieIdentity,
+  }
+
+  console.log(pc.green('Claim issuer, identities and claims deployed successfully!'))
+
+  return data
+}
+
+export async function main({
+  suiteFilePath,
+  skipClaimIssuer,
+  skipIdentities,
+}: {
+  suiteFilePath?: string
+  skipClaimIssuer?: boolean
+  skipIdentities?: boolean
+} = {}) {
+  let suite: ImportedSuite
+
+  if (suiteFilePath) {
+    console.log(pc.green('Importing suite from file...'))
+    suite = await importSuite(suiteFilePath)
+  } else {
+    console.log(pc.green('Deploying full suite fixture...'))
+    console.log(pc.yellow('1/15 Getting signers...'))
+    const signers = await getSigners()
+    suite = (await deployBasicSuite(signers)) as unknown as ImportedSuite
+  }
+
+  !skipClaimIssuer && (await deployClaimIssuer(suite))
+  !skipIdentities && (await deployIdentities(suite))
+
+  return suite
 }
