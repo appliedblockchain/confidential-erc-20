@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat'
-import { UCEF3643, MockIdentityRegistry, MockCompliance } from '../../typechain-types'
+import { UCEF3643, MockIdentityRegistry, MockCompliance, MockTrexImplementationAuthority } from '../../typechain-types'
 import { Signer } from 'ethers'
 
 export async function deployToken3643({
@@ -30,28 +30,40 @@ export async function deployToken3643({
   const token = (await tokenFactory.deploy()) as unknown as UCEF3643
   await token.waitForDeployment()
 
-  // Initialize the token
-  await token.init(
+  // Deploy TrexIAuthority
+  const TrexIAuthority = await ethers.getContractFactory('MockTrexImplementationAuthority')
+  const trexIAuthority = (await TrexIAuthority.deploy(
+    await token.getAddress(),
+  )) as unknown as MockTrexImplementationAuthority
+  await trexIAuthority.waitForDeployment()
+
+  // Deploy UCEF3643 with proxy
+  const TokenProxy = await ethers.getContractFactory('TokenProxy')
+  const tokenProxy_ = (await TokenProxy.deploy(
+    await trexIAuthority.getAddress(),
     await mockIdentityRegistry.getAddress(),
     await mockCompliance.getAddress(),
     name,
     symbol,
     decimals,
     onchainID,
-  )
+  )) as unknown as UCEF3643
+  await tokenProxy_.waitForDeployment()
+
+  const tokenProxy = (await ethers.getContractAt('UCEF3643', await tokenProxy_.getAddress())) as unknown as UCEF3643
 
   // Register and verify agent identity
   await mockIdentityRegistry.registerIdentity(agentAddress, 1, true)
   await mockIdentityRegistry.setVerified(agentAddress, true)
 
   // Grant agent role to our test agent
-  await token.addAgent(agentAddress)
+  await tokenProxy.addAgent(agentAddress)
 
   // Set up mock to allow minting
   await mockCompliance.setCanTransfer(ethers.ZeroAddress, true)
 
   // Unpause the token
-  await token.connect(agent).unpause()
+  await tokenProxy.connect(agent).unpause()
 
-  return { token, mockIdentityRegistry, mockCompliance }
+  return { token: tokenProxy, mockIdentityRegistry, mockCompliance, trexIAuthority }
 }

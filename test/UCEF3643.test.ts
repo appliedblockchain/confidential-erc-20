@@ -1,5 +1,5 @@
 import { Signer } from 'ethers'
-import { MockCompliance, MockIdentityRegistry, UCEF3643 } from '../typechain-types'
+import { MockCompliance, MockIdentityRegistry, MockTrexImplementationAuthority, UCEF3643 } from '../typechain-types'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { deployToken3643 } from './fixtures/deploy-3643'
@@ -15,6 +15,7 @@ describe('UCEF3643', function () {
   let agent: Signer
   let mockIdentityRegistry: MockIdentityRegistry
   let mockCompliance: MockCompliance
+  let trexIAuthority: MockTrexImplementationAuthority
 
   beforeEach(async function () {
     // Get signers
@@ -28,6 +29,7 @@ describe('UCEF3643', function () {
       token: token_,
       mockIdentityRegistry: mockIdentityRegistry_,
       mockCompliance: mockCompliance_,
+      trexIAuthority: trexIAuthority_,
     } = await deployToken3643({
       agent,
       name: 'Test Token',
@@ -39,6 +41,7 @@ describe('UCEF3643', function () {
     token = token_
     mockIdentityRegistry = mockIdentityRegistry_
     mockCompliance = mockCompliance_
+    trexIAuthority = trexIAuthority_
   })
 
   describe('Deployment', function () {
@@ -57,9 +60,36 @@ describe('UCEF3643', function () {
 
     beforeEach(async function () {
       // Deploy a new token for testing init
-      const tokenFactory = await ethers.getContractFactory('UCEF3643')
+      const tokenFactory = await ethers.getContractFactory('UCEF3643', owner)
       newToken = (await tokenFactory.deploy()) as unknown as UCEF3643
       await newToken.waitForDeployment()
+    })
+
+    it('Should update token implementation', async () => {
+      const newTokenFactory = await ethers.getContractFactory('MockNewTokenImplementation')
+      const mockNewToken = (await newTokenFactory.deploy()) as unknown as UCEF3643
+      await mockNewToken.waitForDeployment()
+
+      const currentTokenAddress = await token.getAddress()
+
+      // Update token implementation
+      await trexIAuthority.updateTokenImplementation(await mockNewToken.getAddress())
+
+      // Should retain the same token address
+      expect(await token.getAddress()).to.equal(currentTokenAddress)
+
+      // Token storage is within proxy contract which should not change
+      // Should retain the identity registry of the token
+      expect(await token.identityRegistry()).to.equal(await mockIdentityRegistry.getAddress())
+      // Should retain the same compliance
+      expect(await token.compliance()).to.equal(await mockCompliance.getAddress())
+      // Should retain the same name and symbol
+      expect(await token.name()).to.equal('Test Token')
+      expect(await token.symbol()).to.equal('TEST')
+
+      // Expect allowance method to be updated
+      const allowance = await token.allowance(ownerAddress, addr1Address)
+      expect(allowance).to.equal(99900)
     })
 
     it('Should initialize with valid parameters', async function () {
