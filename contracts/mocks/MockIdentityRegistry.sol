@@ -34,4 +34,9 @@ contract MockIdentityRegistry {
     function registerIdentity(address _userAddress, uint256 _country, bool _isVerified) external {
         _verified[_userAddress] = IdentityData(_isVerified, _country);
     }
+
+    function identity(address /*_userAddress*/) public pure returns (address) {
+        // Returning hardcoded address for testing
+        return 0x26291175Fa0Ea3C8583fEdEB56805eA68289b105;
+    }
 } 

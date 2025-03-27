@@ -209,6 +209,10 @@ describe('UCEF3643', function () {
     it('Should revert if user tries to access balance of another user', async function () {
       await expect(token.connect(addr2).balanceOf(addr1Address)).to.be.revertedWith('Unauthorized balance access')
     })
+
+    it('Should return balance if user is checking his own identity balance', async function () {
+      expect(await token.connect(addr1).balanceOf('0x26291175Fa0Ea3C8583fEdEB56805eA68289b105')).to.equal(0)
+    })
   })
 
   describe('Token Transfers', function () {
