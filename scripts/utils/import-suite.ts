@@ -1,5 +1,7 @@
 import { Wallet, Signer, BaseContract } from 'ethers'
-import { ethers } from 'hardhat'
+import { ethers, network } from 'hardhat'
+import { NetworkName } from '@appliedblockchain/silentdatarollup-core'
+import { SilentDataRollupProvider } from '@appliedblockchain/silentdatarollup-ethers-provider'
 import {
   ClaimTopicsRegistry,
   TrustedIssuersRegistry,
@@ -65,6 +67,27 @@ function getContractFactory<T extends BaseContract>(name: string) {
   return ethers.getContractFactory(name) as unknown as Promise<T>
 }
 
+async function getSignersFromAccounts(accounts: any): Promise<Record<string, Wallet | Signer>> {
+  const signers: Record<string, Wallet | Signer> = {}
+  for (const account of accounts) {
+    const [name, details] = Object.entries(account)[0] as [string, { address: string; privateKey?: string }]
+    if (details.privateKey) {
+      const url = (network.config as any).url as string
+      const provider = new SilentDataRollupProvider({
+        rpcUrl: url,
+        network: NetworkName.TESTNET,
+        chainId: network.config.chainId,
+        privateKey: details.privateKey,
+      })
+      signers[name] = new ethers.Wallet(details.privateKey, provider)
+    } else {
+      signers[name] = await ethers.getSigner(details.address)
+    }
+  }
+
+  return signers
+}
+
 /**
  * Import a suite from a JSON file and return the suite object with signers and contracts loaded
  */
@@ -106,15 +129,7 @@ export async function importSuite(filePath: string): Promise<ImportedSuite> {
   ])
 
   // Get signers from accounts
-  const signers: Record<string, Wallet | Signer> = {}
-  for (const account of suiteJson.accounts) {
-    const [name, details] = Object.entries(account)[0] as [string, { address: string; privateKey?: string }]
-    if (details.privateKey) {
-      signers[name] = new ethers.Wallet(details.privateKey, ethers.provider)
-    } else {
-      signers[name] = await ethers.getSigner(details.address)
-    }
-  }
+  const signers = await getSignersFromAccounts(suiteJson.accounts)
 
   const hasClaimIssuer = !!suiteJson.suite.claimIssuerContract
 

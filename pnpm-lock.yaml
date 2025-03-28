@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@appliedblockchain/silentdatarollup-ethers-provider':
+        specifier: ^0.1.3
+        version: 0.1.3
     devDependencies:
       '@appliedblockchain/silentdatarollup-core':
         specifier: ^0.1.3
@@ -121,6 +125,10 @@ packages:
 
   '@appliedblockchain/silentdatarollup-core@0.1.3':
     resolution: {integrity: sha512-bP/BeIk322eR3C54+pvpxfbJOhLPHDGX6M8qdgYqBvYkWYiz7oVwn3QnxnGbLnrYjA/k8Wwa9mC8RXBQkvjfjw==, tarball: https://npm.pkg.github.com/download/@appliedblockchain/silentdatarollup-core/0.1.3/668af20792e9536693a2101256cd99dfdcdd6e73}
+    engines: {node: '>=18.0.0'}
+
+  '@appliedblockchain/silentdatarollup-ethers-provider@0.1.3':
+    resolution: {integrity: sha512-bkFnwq0OK+CKtlU4SgBAi+y4eb1qdk0zG6nRKpMkSP6EmKQBNklVJ+gl0miaDfbCr/zcFBnU7VnC8cwtDQ8H4g==, tarball: https://npm.pkg.github.com/download/@appliedblockchain/silentdatarollup-ethers-provider/0.1.3/f37efa78baff94e6885c72b72642ea1e2e1a3a69}
     engines: {node: '>=18.0.0'}
 
   '@appliedblockchain/silentdatarollup-hardhat-plugin@0.1.3':
@@ -2553,6 +2561,15 @@ snapshots:
     dependencies:
       debug: 4.3.7
       ethers: 6.13.2
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  '@appliedblockchain/silentdatarollup-ethers-provider@0.1.3':
+    dependencies:
+      '@appliedblockchain/silentdatarollup-core': 0.1.3
+      ethers: 6.13.5
     transitivePeerDependencies:
       - bufferutil
       - supports-color

@@ -1,19 +1,8 @@
 import fs from 'fs'
-import { main } from './deploy-full-suite.fixture'
-const exportPrivateKeys = process.env.EXPORT_PRIVATE_KEYS === 'true'
+import { main } from './fixtures/deploy-full-suite.fixture'
+import { exportAccounts } from './utils'
 
-function exportAccounts(accounts: Record<string, { address: string; privateKey?: string }>, exportPrivateKey = false) {
-  return Object.entries(accounts)
-    .filter(([_, account]) => account.address)
-    .map(([name, account]) => {
-      return {
-        [name]: {
-          address: account.address,
-          ...(exportPrivateKey && { privateKey: account.privateKey }),
-        },
-      }
-    })
-}
+const exportPrivateKeys = process.env.EXPORT_PRIVATE_KEYS === 'true'
 
 ;(async () => {
   const result = await main({
@@ -62,7 +51,10 @@ function exportAccounts(accounts: Record<string, { address: string; privateKey?:
               charlieIdentity: await result.identities.charlieIdentity.getAddress(),
             }
           : undefined,
-        accounts: exportAccounts(result.accounts as any, exportPrivateKeys),
+        accounts: exportAccounts(
+          result.accounts as Record<string, { address: string; privateKey?: string }>,
+          exportPrivateKeys,
+        ),
       },
       null,
       2,
