@@ -1,0 +1,51 @@
+{
+  "name": "@appliedblockchain/ucef-3643",
+  "description": "Unopinionated Confidential ERC-20 Framework (UCEF) for ERC-3643",
+  "version": "0.0.1",
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart",
+    "contracts",
+    "erc-20",
+    "confidential",
+    "privacy",
+    "UCEF",
+    "ERC-3643"
+  ],
+  "author": "Applied Blockchain <info@appliedblockchain.com>",
+  "license": "MIT",
+  "files": [
+    "contracts",
+    "artifacts",
+    "typechain-types",
+    "index.js",
+    "index.d.ts"
+  ],
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "compile": "hardhat compile",
+    "clean": "hardhat clean"
+  },
+  "dependencies": {
+    "ethers": "^6.9.0"
+  },
+  "devDependencies": {
+    "@onchain-id/solidity": "2.2.1",
+    "@openzeppelin/contracts": "4.9.0",
+    "@openzeppelin/contracts-upgradeable": "4.9.0",
+    "@tokenysolutions/t-rex": "4.1.6",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@typechain/hardhat": "^9.0.0",
+    "hardhat": "^2.19.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/appliedblockchain/confidential-erc-20.git"
+  },
+  "bugs": {
+    "url": "https://github.com/appliedblockchain/confidential-erc-20/issues"
+  },
+  "homepage": "https://github.com/appliedblockchain/confidential-erc-20#readme"
+}

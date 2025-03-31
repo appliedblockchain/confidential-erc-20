@@ -1,5 +1,7 @@
 import { ethers } from 'hardhat'
-import { UCEF3643, MockIdentityRegistry, MockCompliance, MockTrexImplementationAuthority } from '../../typechain-types'
+import { UCEF3643Contracts, UCEF3643 } from '@appliedblockchain/ucef-3643'
+import TREX from '@tokenysolutions/t-rex'
+import { MockIdentityRegistry, MockCompliance, MockTrexImplementationAuthority } from '../../typechain-types'
 import { Signer } from 'ethers'
 
 export async function deployToken3643({
@@ -26,7 +28,10 @@ export async function deployToken3643({
   await mockCompliance.waitForDeployment()
 
   // Deploy UCEF3643
-  const tokenFactory = await ethers.getContractFactory('UCEF3643')
+  const tokenFactory = await ethers.getContractFactory(
+    UCEF3643Contracts.UCEF3643.abi,
+    UCEF3643Contracts.UCEF3643.bytecode,
+  )
   const token = (await tokenFactory.deploy()) as unknown as UCEF3643
   await token.waitForDeployment()
 
@@ -38,7 +43,7 @@ export async function deployToken3643({
   await trexIAuthority.waitForDeployment()
 
   // Deploy UCEF3643 with proxy
-  const TokenProxy = await ethers.getContractFactory('TokenProxy')
+  const TokenProxy = await ethers.getContractFactory(TREX.contracts.TokenProxy.abi, TREX.contracts.TokenProxy.bytecode)
   const tokenProxy_ = (await TokenProxy.deploy(
     await trexIAuthority.getAddress(),
     await mockIdentityRegistry.getAddress(),
@@ -50,7 +55,10 @@ export async function deployToken3643({
   )) as unknown as UCEF3643
   await tokenProxy_.waitForDeployment()
 
-  const tokenProxy = (await ethers.getContractAt('UCEF3643', await tokenProxy_.getAddress())) as unknown as UCEF3643
+  const tokenProxy = (await ethers.getContractAt(
+    UCEF3643Contracts.UCEF3643.abi,
+    await tokenProxy_.getAddress(),
+  )) as unknown as UCEF3643
 
   // Register and verify agent identity
   await mockIdentityRegistry.registerIdentity(agentAddress, 1, true)

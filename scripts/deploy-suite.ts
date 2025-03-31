@@ -60,6 +60,9 @@ const exportPrivateKeys = process.env.EXPORT_PRIVATE_KEYS === 'true'
       2,
     )
 
-    fs.writeFileSync('DeploymentOutput.json', content)
+    if (!fs.existsSync('out')) {
+      fs.mkdirSync('out')
+    }
+    fs.writeFileSync('out/DeploymentOutput.json', content)
   }
 })()

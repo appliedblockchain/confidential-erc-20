@@ -8,8 +8,8 @@ contract MockCompliance {
 
     function canTransfer(
         address _from,
-        address _to,
-        uint256 _amount
+        address /*_to*/,
+        uint256 /*_amount*/
     ) external view returns (bool) {
         return _canTransfer[_from];
     }

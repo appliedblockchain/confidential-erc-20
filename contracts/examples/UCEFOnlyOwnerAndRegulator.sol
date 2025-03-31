@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../extensions/UCEFRegulated.sol";
+import {UCEFRegulated} from "@appliedblockchain/ucef/contracts/UCEFRegulated.sol";
 
 contract UCEFOnlyOwnerAndRegulator is UCEFRegulated {
 
-    constructor() UCEF('UCEFOnlyOwnerAndRegulator', 'uOOT') UCEFRegulated(msg.sender) {}
+    constructor() UCEFRegulated(msg.sender, 'UCEFOnlyOwnerAndRegulator', 'uOOT') {}
 
     function mint(address account, uint256 amount) public {
         _mint(account, amount);
