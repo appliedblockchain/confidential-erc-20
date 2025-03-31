@@ -1,7 +1,9 @@
 import { Signer } from 'ethers'
-import { MockCompliance, MockIdentityRegistry, MockTrexImplementationAuthority, UCEF3643 } from '../typechain-types'
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
+import { UCEF3643, UCEF3643Contracts } from '@appliedblockchain/ucef-3643'
+import MockTokenImplementation from '@appliedblockchain/ucef-3643/artifacts/contracts/mocks/MockNewTokenImplementation.sol/MockNewTokenImplementation.json'
+import { MockCompliance, MockIdentityRegistry, MockTrexImplementationAuthority } from '../typechain-types'
 import { deployToken3643 } from './fixtures/deploy-3643'
 
 describe('UCEF3643', function () {
@@ -60,13 +62,20 @@ describe('UCEF3643', function () {
 
     beforeEach(async function () {
       // Deploy a new token for testing init
-      const tokenFactory = await ethers.getContractFactory('UCEF3643', owner)
+      const tokenFactory = await ethers.getContractFactory(
+        UCEF3643Contracts.UCEF3643.abi,
+        UCEF3643Contracts.UCEF3643.bytecode,
+        owner,
+      )
       newToken = (await tokenFactory.deploy()) as unknown as UCEF3643
       await newToken.waitForDeployment()
     })
 
     it('Should update token implementation', async () => {
-      const newTokenFactory = await ethers.getContractFactory('MockNewTokenImplementation')
+      const newTokenFactory = await ethers.getContractFactory(
+        MockTokenImplementation.abi,
+        MockTokenImplementation.bytecode,
+      )
       const mockNewToken = (await newTokenFactory.deploy()) as unknown as UCEF3643
       await mockNewToken.waitForDeployment()
 

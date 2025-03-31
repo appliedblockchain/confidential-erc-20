@@ -3,7 +3,7 @@ import { ethers, network } from 'hardhat'
 import { NetworkName } from '@appliedblockchain/silentdatarollup-core'
 import { SilentDataRollupProvider } from '@appliedblockchain/silentdatarollup-ethers-provider'
 import OnchainID from '@onchain-id/solidity'
-import { Identity } from '../../typechain-types'
+import { Identity } from '@appliedblockchain/ucef-3643'
 
 export async function deployContract<T extends BaseContract>(
   name: string,
@@ -23,23 +23,24 @@ export async function deployContractWithAbi<T extends BaseContract>(
   artifacts: { abi: any; bytecode: any; contractName: string },
   signer: Signer,
   args: any[] = [],
+  returnArtifacts?: { abi: any; bytecode: any; contractName: string },
 ) {
-  const { abi, bytecode, contractName } = artifacts
+  const { abi, bytecode } = artifacts
   const factory = new ethers.ContractFactory(abi, bytecode, signer)
   const contract = await factory.deploy(...args)
 
   await contract.waitForDeployment()
 
-  return ethers.getContractAt(contractName, await contract.getAddress(), signer) as unknown as Promise<T>
+  return ethers.getContractAt(returnArtifacts?.abi || abi, await contract.getAddress(), signer) as unknown as Promise<T>
 }
 
 export async function deployIdentityProxy(implementationAuthority: string, managementKey: string, signer: Signer) {
-  const identityProxy = await deployContractWithAbi<Identity>(OnchainID.contracts.IdentityProxy, signer, [
-    implementationAuthority,
-    managementKey,
-  ])
-
-  return ethers.getContractAt('Identity', await identityProxy.getAddress(), signer) as unknown as Promise<Identity>
+  return deployContractWithAbi<Identity>(
+    OnchainID.contracts.IdentityProxy,
+    signer,
+    [implementationAuthority, managementKey],
+    OnchainID.contracts.Identity,
+  )
 }
 
 export async function waitTx(tx: ContractTransactionResponse) {

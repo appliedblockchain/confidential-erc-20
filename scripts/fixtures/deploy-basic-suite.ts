@@ -1,6 +1,7 @@
 import { ethers } from 'hardhat'
 import pc from 'picocolors'
 import OnchainID from '@onchain-id/solidity'
+import { UCEF3643Contracts } from '@appliedblockchain/ucef-3643'
 import {
   ClaimTopicsRegistry,
   IdFactory,
@@ -11,9 +12,10 @@ import {
   TREXImplementationAuthority,
   TrustedIssuersRegistry,
   TREXFactory,
-  DefaultCompliance,
-} from '../../typechain-types'
-import { deployContract, deployContractWithAbi, deployIdentityProxy, waitTx, Signers } from '../utils'
+  Identity,
+} from '@appliedblockchain/ucef-3643/types'
+import TREX from '@tokenysolutions/t-rex'
+import { deployContractWithAbi, deployIdentityProxy, waitTx, Signers } from '../utils'
 
 export async function deployBasicSuite(signers: Signers) {
   const {
@@ -32,25 +34,34 @@ export async function deployBasicSuite(signers: Signers) {
   // Deploy implementations
   console.log(pc.yellow('2/15 Deploying implementations...'))
   console.log(pc.gray('ClaimTopicsRegistry'))
-  const claimTopicsRegistryImplementation = await deployContract<ClaimTopicsRegistry>('ClaimTopicsRegistry', deployer)
+  const claimTopicsRegistryImplementation = await deployContractWithAbi<ClaimTopicsRegistry>(
+    TREX.contracts.ClaimTopicsRegistry,
+    deployer,
+  )
   console.log(pc.gray('TrustedIssuersRegistry'))
-  const trustedIssuersRegistryImplementation = await deployContract<TrustedIssuersRegistry>(
-    'TrustedIssuersRegistry',
+  const trustedIssuersRegistryImplementation = await deployContractWithAbi<TrustedIssuersRegistry>(
+    TREX.contracts.TrustedIssuersRegistry,
     deployer,
   )
   console.log(pc.gray('IdentityRegistryStorage'))
-  const identityRegistryStorageImplementation = await deployContract<IdentityRegistryStorage>(
-    'IdentityRegistryStorage',
+  const identityRegistryStorageImplementation = await deployContractWithAbi<IdentityRegistryStorage>(
+    TREX.contracts.IdentityRegistryStorage,
     deployer,
   )
   console.log(pc.gray('IdentityRegistry'))
-  const identityRegistryImplementation = await deployContract<IdentityRegistry>('IdentityRegistry', deployer)
+  const identityRegistryImplementation = await deployContractWithAbi<IdentityRegistry>(
+    TREX.contracts.IdentityRegistry,
+    deployer,
+  )
   console.log(pc.gray('ModularCompliance'))
-  const modularComplianceImplementation = await deployContract<ModularCompliance>('ModularCompliance', deployer)
+  const modularComplianceImplementation = await deployContractWithAbi<ModularCompliance>(
+    TREX.contracts.ModularCompliance,
+    deployer,
+  )
   console.log(pc.gray('Token'))
-  const tokenImplementation = await deployContract<Token>('UCEF3643', deployer)
+  const tokenImplementation = await deployContractWithAbi<Token>(UCEF3643Contracts.UCEF3643, deployer)
   console.log(pc.gray('Identity'))
-  const identityImplementation = await deployContractWithAbi(OnchainID.contracts.Identity, deployer, [
+  const identityImplementation = await deployContractWithAbi<Identity>(OnchainID.contracts.Identity, deployer, [
     await deployer.getAddress(),
     true,
   ])
@@ -69,8 +80,8 @@ export async function deployBasicSuite(signers: Signers) {
   ])
 
   console.log(pc.gray('TREXImplementationAuthority'))
-  const trexImplementationAuthority = await deployContract<TREXImplementationAuthority>(
-    'TREXImplementationAuthority',
+  const trexImplementationAuthority = await deployContractWithAbi<TREXImplementationAuthority>(
+    TREX.contracts.TREXImplementationAuthority,
     deployer,
     [true, ethers.ZeroAddress, ethers.ZeroAddress],
   )
@@ -92,7 +103,7 @@ export async function deployBasicSuite(signers: Signers) {
   await waitTx(await trexImplementationAuthority.connect(deployer).addAndUseTREXVersion(versionStruct, contractsStruct))
 
   console.log(pc.yellow('3/15 Deploying factory...'))
-  const trexFactory = await deployContract<TREXFactory>('TREXFactory', deployer, [
+  const trexFactory = await deployContractWithAbi<TREXFactory>(TREX.contracts.TREXFactory, deployer, [
     await trexImplementationAuthority.getAddress(),
     await identityFactory.getAddress(),
   ])
@@ -102,31 +113,31 @@ export async function deployBasicSuite(signers: Signers) {
 
   console.log(pc.yellow('4/15 Deploying Registry Proxies...'))
   console.log(pc.gray('ClaimTopicsRegistry'))
-  const claimTopicsRegistry = await deployContract<ClaimTopicsRegistry>(
-    'ClaimTopicsRegistryProxy',
+  const claimTopicsRegistry = await deployContractWithAbi<ClaimTopicsRegistry>(
+    TREX.contracts.ClaimTopicsRegistryProxy,
     deployer,
     [trexImplementationAuthorityAddress],
-    'ClaimTopicsRegistry',
+    TREX.contracts.ClaimTopicsRegistry,
   )
   console.log(pc.gray('TrustedIssuersRegistry'))
-  const trustedIssuersRegistry = await deployContract<TrustedIssuersRegistry>(
-    'TrustedIssuersRegistryProxy',
+  const trustedIssuersRegistry = await deployContractWithAbi<TrustedIssuersRegistry>(
+    TREX.contracts.TrustedIssuersRegistryProxy,
     deployer,
     [trexImplementationAuthorityAddress],
-    'TrustedIssuersRegistry',
+    TREX.contracts.TrustedIssuersRegistry,
   )
   console.log(pc.gray('IdentityRegistryStorage'))
-  const identityRegistryStorage = await deployContract<IdentityRegistryStorage>(
-    'IdentityRegistryStorageProxy',
+  const identityRegistryStorage = await deployContractWithAbi<IdentityRegistryStorage>(
+    TREX.contracts.IdentityRegistryStorageProxy,
     deployer,
     [trexImplementationAuthorityAddress],
-    'IdentityRegistryStorage',
+    TREX.contracts.IdentityRegistryStorage,
   )
   console.log(pc.gray('DefaultCompliance'))
-  const defaultCompliance = await deployContract<DefaultCompliance>('DefaultCompliance', deployer)
+  const defaultCompliance = await deployContractWithAbi<ModularCompliance>(TREX.contracts.ModularCompliance, deployer)
   console.log(pc.gray('IdentityRegistry'))
-  const identityRegistry = await deployContract<IdentityRegistry>(
-    'IdentityRegistryProxy',
+  const identityRegistry = await deployContractWithAbi<IdentityRegistry>(
+    TREX.contracts.IdentityRegistryProxy,
     deployer,
     [
       trexImplementationAuthorityAddress,
@@ -134,7 +145,7 @@ export async function deployBasicSuite(signers: Signers) {
       await claimTopicsRegistry.getAddress(),
       await identityRegistryStorage.getAddress(),
     ],
-    'IdentityRegistry',
+    TREX.contracts.IdentityRegistry,
   )
 
   console.log(pc.yellow('5/15 Deploying Token Proxy...'))
@@ -146,8 +157,8 @@ export async function deployBasicSuite(signers: Signers) {
   const tokenName = 'TREXDINO'
   const tokenSymbol = 'TREX'
   const tokenDecimals = 0n
-  const token = await deployContract<Token>(
-    'TokenProxy',
+  const token = await deployContractWithAbi<Token>(
+    TREX.contracts.TokenProxy,
     deployer,
     [
       await trexImplementationAuthority.getAddress(),
@@ -158,7 +169,7 @@ export async function deployBasicSuite(signers: Signers) {
       tokenDecimals,
       await tokenOID.getAddress(),
     ],
-    'UCEF3643',
+    TREX.contracts.Token,
   )
 
   console.log(pc.yellow('6/15 Binding Identity Registry...'))

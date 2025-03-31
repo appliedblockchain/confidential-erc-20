@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../token/UCEF.sol";
-import "../extensions/UCEFOwned.sol";
+import {UCEF} from "@appliedblockchain/ucef/contracts/UCEF.sol";
 
 contract UCEFCustom is UCEF {
     address public regulator;

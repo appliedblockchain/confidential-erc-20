@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../extensions/UCEFOwned.sol";
-import "../extensions/UCEFPermit.sol";
+import {UCEFOwned, UCEF} from "@appliedblockchain/ucef/contracts/UCEFOwned.sol";
+import {UCEFPermit} from "@appliedblockchain/ucef/contracts/extensions/UCEFPermit.sol";
 
 contract UCEFOnlyOwnerWithPermit is UCEFOwned, UCEFPermit {
-    constructor() UCEF("UCEFOnlyOwner", "uOOT") UCEFPermit("UCEFOnlyOwner") {}
+    constructor() UCEFOwned("UCEFOnlyOwner", "uOOT") UCEFPermit("UCEFOnlyOwner") {}
 
     function mint(address account, uint256 amount) public {
         _mint(account, amount);

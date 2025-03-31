@@ -1,7 +1,8 @@
 import { ethers } from 'hardhat'
 import pc from 'picocolors'
-import { ClaimIssuer } from '../../typechain-types'
-import { ImportedSuite, deployContract, waitTx } from '../utils'
+import OnchainID from '@onchain-id/solidity'
+import { ClaimIssuer } from '@appliedblockchain/ucef-3643/types'
+import { ImportedSuite, deployContractWithAbi, waitTx } from '../utils'
 
 export async function deployClaimIssuer(data: ImportedSuite) {
   console.log(pc.green('Deploying claim issuer, identities and claims...'))
@@ -18,7 +19,9 @@ export async function deployClaimIssuer(data: ImportedSuite) {
     await waitTx(await claimTopicsRegistry.connect(deployer).addClaimTopic(claimTopics[0]))
   }
 
-  const claimIssuerContract = await deployContract<ClaimIssuer>('ClaimIssuer', deployer, [await deployer.getAddress()])
+  const claimIssuerContract = await deployContractWithAbi<ClaimIssuer>(OnchainID.contracts.ClaimIssuer, deployer, [
+    await deployer.getAddress(),
+  ])
   data.suite.claimIssuerContract = claimIssuerContract
 
   console.log(pc.yellow('8/15 Adding Claim Issuer Key...'))
