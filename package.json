@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "compile": "npx hardhat compile",
-    "compile:all": "pnpm compile && pnpm -r --if-present compile",
+    "compile:all": "pnpm -r --if-present compile && pnpm compile",
     "test": "npx hardhat test",
     "chain": "npx hardhat node",
     "coverage": "npx hardhat coverage",
