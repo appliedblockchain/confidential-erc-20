@@ -1,16 +1,18 @@
 export { UCEF3643 } from './types'
 export { Identity, Token, ClaimIssuer } from './types'
 
-interface ContractJSON {
-  _format: string;
-  contractName: string;
-  sourcename: string;
-  abi: any[];
-  bytecode: string;
-  deployedBytecode: string;
-  linkReferences: any;
+export type Abi = any[];
+export interface Artifact<AbiT extends Abi = Abi> {
+    contractName: string;
+    sourceName: string;
+    bytecode: string;
+    abi: AbiT;
+    linkReferences: Record<string, Record<string, Array<{
+        length: number;
+        start: number;
+    }>>>;
 }
 
 export namespace UCEF3643Contracts {
-  export const UCEF3643: ContractJSON
+  export const UCEF3643: Artifact
 }
