@@ -6,7 +6,7 @@ The rapid growth of decentralised finance highlights a critical tension between 
 
 **An unopinionated implementation**
 
-To achieve a truly unopinionated implementation, cryptographic details should be abstracted away from the Solidity interface. This ensures that different cryptographic approaches can be swapped without altering the contract’s external behaviour. Furthermore, logic around permissions and visibility controls should be programmable using standard Solidity constructs, avoiding proprietary libraries or custom extensions. The UCEF approach preserves the ERC-20 standard’s simplicity and composability while enabling flexible privacy rules that can adapt to evolving security requirements and compliance needs.
+To achieve a truly unopinionated implementation, cryptographic details should be abstracted away from the Solidity interface. This ensures that different cryptographic approaches can be swapped without altering the contract's external behaviour. Furthermore, logic around permissions and visibility controls should be programmable using standard Solidity constructs, avoiding proprietary libraries or custom extensions. The UCEF approach preserves the ERC-20 standard's simplicity and composability while enabling flexible privacy rules that can adapt to evolving security requirements and compliance needs.
 
 ## ***Features***
 
@@ -43,4 +43,8 @@ A range of examples are available at: [contracts/examples/](contracts/examples/)
 
 ## **Adopted By**
 <a href="https://silentdata.com/"><img src="https://github.com/user-attachments/assets/36ea4772-23c8-4c7a-ad2e-e3d6ee40ef9a" alt="Light Silent Data Logo" width="300"/></a>
+
+## **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
