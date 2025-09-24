@@ -8,22 +8,31 @@ import {UCEF} from "./UCEF.sol";
 /**
  * @title UCEFRegulated
  * @dev Extension for UCEF token that implements a regulated authorization model.
- * This model allows both account owners and a designated regulator to view balances.
+ * This model allows both account owners and a designated regulator to view balances and events.
  *
  * This implementation is suitable for scenarios where regulatory oversight is required
  * while still maintaining privacy from the general public.
  *
  * Features:
- * - Designated regulator with balance viewing privileges
+ * - Designated regulator with balance and event viewing privileges
  * - Updatable regulator address
- * - Account owners can still view their own balances
+ * - Account owners can still view their own balances and related events
+ *
+ * Event Behavior:
+ * - Transfer events: Visible to sender, receiver, and regulator
+ * - Approval events: Visible to owner, spender, and regulator
+ * - RegulatorUpdated events: Visible only to old and new regulator
+ * - Regulator has oversight of all token activities for compliance
  *
  * Security considerations:
- * - The regulator has visibility into all account balances
+ * - The regulator has visibility into all account balances and events
  * - Only the current regulator can update the regulator address
  * - Zero address checks prevent locking of regulatory functions
  */
 contract UCEFRegulated is UCEF {
+    // Event type constant for Private Events
+    bytes32 public constant EVENT_TYPE_REGULATOR_UPDATED = keccak256("RegulatorUpdated(address,address)");
+
     address private _regulator;
 
     /**
@@ -47,17 +56,17 @@ contract UCEFRegulated is UCEF {
 
     /**
      * @dev Constructor that sets the initial regulator address
-     * @param initalRegulator The address to be set as the first regulator
+     * @param initialRegulator The address to be set as the first regulator
      *
      * Requirements:
-     * - `initalRegulator` cannot be the zero address
+     * - `initialRegulator` cannot be the zero address
      */
-    constructor(address initalRegulator, string memory name, string memory symbol) UCEF(name, symbol) {
-        if (initalRegulator == address(0)) {
+    constructor(address initialRegulator, string memory name, string memory symbol) UCEF(name, symbol) {
+        if (initialRegulator == address(0)) {
             revert UCEFRegulatedInvalidRegulator(address(0));
         }
 
-        _updateRegulator(initalRegulator);
+        _updateRegulator(initialRegulator);
     }
 
     /**
@@ -103,12 +112,12 @@ contract UCEFRegulated is UCEF {
      * @dev Internal function to update the regulator address
      * @param newRegulator Address to set as the new regulator
      *
-     * Emits a {RegulatorUpdated} event
+     * Emits a RegulatorUpdated event visible only to old and new regulator
      */
     function _updateRegulator(address newRegulator) internal virtual {
         address oldRegulator = _regulator;
         _regulator = newRegulator;
-        emit RegulatorUpdated(oldRegulator, newRegulator);
+        _emitRegulatorUpdatedEvent(oldRegulator, newRegulator);
     }
 
     /**
@@ -124,7 +133,109 @@ contract UCEFRegulated is UCEF {
      * - Both account owners and the regulator can view balances
      */
     function _authorizeBalance(address account) internal view virtual override returns (bool) {
-        require(msg.sender == account || msg.sender == _regulator, "Unauthorized access to balance");
+        if (msg.sender != account && msg.sender != _regulator) {
+            revert UCEFUnauthorizedBalanceAccess(msg.sender, account);
+        }
         return true;
+    }
+
+    /**
+     * @dev Override to implement regulated event visibility for transfers
+     * Regulator can view all transfers for oversight alongside the involved parties
+     * @param from The sending address
+     * @param to The receiving address
+     * @return allowedViewers Array containing sender, receiver, and regulator
+     */
+    function _getTransferEventViewers(
+        address from,
+        address to
+    ) internal view virtual override returns (address[] memory allowedViewers) {
+        // Count unique non-zero addresses including regulator
+        uint256 viewerCount = 1; // Always include regulator
+        if (from != address(0) && from != _regulator) viewerCount++;
+        if (to != address(0) && to != from && to != _regulator) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        allowedViewers[index++] = _regulator; // Always include regulator
+        if (from != address(0) && from != _regulator) {
+            allowedViewers[index++] = from;
+        }
+        if (to != address(0) && to != from && to != _regulator) {
+            allowedViewers[index] = to;
+        }
+    }
+
+    /**
+     * @dev Override to implement regulated event visibility for approvals
+     * Regulator can view all approvals for oversight alongside owner and spender
+     * @param owner The address that owns the tokens
+     * @param spender The address that can spend the tokens
+     * @return allowedViewers Array containing owner, spender, and regulator
+     */
+    function _getApprovalEventViewers(
+        address owner,
+        address spender
+    ) internal view virtual override returns (address[] memory allowedViewers) {
+        // Count unique addresses including regulator
+        uint256 viewerCount = 1; // Always include regulator
+        if (owner != _regulator) viewerCount++;
+        if (spender != owner && spender != _regulator) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        allowedViewers[index++] = _regulator; // Always include regulator
+        if (owner != _regulator) {
+            allowedViewers[index++] = owner;
+        }
+        if (spender != owner && spender != _regulator) {
+            allowedViewers[index] = spender;
+        }
+    }
+
+    /**
+     * @dev Internal function to emit RegulatorUpdated events
+     * Can be overridden by derived contracts to implement custom emission logic
+     * Default implementation: only old and new regulator can view regulator changes
+     * @param previousRegulator The address of the previous regulator
+     * @param newRegulator The address of the new regulator
+     */
+    function _emitRegulatorUpdatedEvent(address previousRegulator, address newRegulator) internal virtual {
+        address[] memory allowedViewers = _getRegulatorUpdatedEventViewers(previousRegulator, newRegulator);
+        bytes memory payload = abi.encode(previousRegulator, newRegulator);
+
+        emit PrivateEvent(allowedViewers, EVENT_TYPE_REGULATOR_UPDATED, payload);
+    }
+
+    /**
+     * @dev Internal function to determine who can view RegulatorUpdated events
+     * Only old and new regulator should see regulator changes for maximum privacy
+     * @param previousRegulator The address of the previous regulator
+     * @param newRegulator The address of the new regulator
+     * @return allowedViewers Array containing only old and new regulator
+     */
+    function _getRegulatorUpdatedEventViewers(
+        address previousRegulator,
+        address newRegulator
+    ) internal pure returns (address[] memory allowedViewers) {
+        // Count unique non-zero addresses
+        uint256 viewerCount = 0;
+        if (previousRegulator != address(0)) viewerCount++;
+        if (newRegulator != address(0) && newRegulator != previousRegulator) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        if (previousRegulator != address(0)) {
+            allowedViewers[index++] = previousRegulator;
+        }
+        if (newRegulator != address(0) && newRegulator != previousRegulator) {
+            allowedViewers[index] = newRegulator;
+        }
     }
 }
