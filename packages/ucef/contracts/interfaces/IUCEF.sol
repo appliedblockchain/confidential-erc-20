@@ -9,6 +9,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  */
 interface IUCEF is IERC20 {
     /**
+     * @dev Private Event for selective visibility of on-chain events
+     * @param allowedViewers List of addresses authorized to view the event
+     * @param eventType The keccak256 hash of the original event signature
+     * @param payload The ABI-encoded event arguments
+     */
+    event PrivateEvent(
+        address[] allowedViewers,
+        bytes32 indexed eventType,
+        bytes payload
+    );
+
+    /**
      * @dev Returns the amount of tokens owned by `account`.
      * Only returns balance if the caller is authorized.
      */

@@ -7,12 +7,20 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * @title UCEF (User Confidential ERC20 Funds)
  * @dev Implementation of a confidential ERC20 token where balance visibility is restricted.
  * This contract extends the standard ERC20 implementation with additional privacy features
- * that control who can view token balances.
+ * that control who can view token balances and events.
  *
  * Key features:
  * - Balance visibility control through authorization mechanism
+ * - Private Events for selective event visibility
  * - Standard ERC20 functionality
- * - Protected balance access
+ * - Protected balance and allowance access
+ *
+ * Private Events Integration:
+ * This contract implements the Silent Data Private Events system, which enables selective
+ * visibility of on-chain events. Events are emitted as PrivateEvent logs with:
+ * - allowedViewers: addresses authorized to view the event
+ * - eventType: hash of the original event signature
+ * - payload: ABI-encoded event arguments
  *
  * Extension system:
  * The contract provides two official extensions:
@@ -22,17 +30,36 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * Custom extensions can be created by:
  * 1. Inheriting from this contract
  * 2. Implementing the _authorizeBalance function with custom logic
- * 3. Choosing between silent failure (return false) or explicit revert for unauthorized access
+ * 3. Overriding _getTransferEventViewers and _getApprovalEventViewers for event privacy
+ * 4. Overriding _emitTransferEvent and _emitApprovalEvent for custom emission logic
+ * 5. Choosing between silent failure (return false) or explicit revert for unauthorized access
  *
  * Security considerations:
  * - Balance authorization must be properly implemented in derived contracts
+ * - Event viewer lists should align with the privacy model
  * - The contract maintains actual balances internally while exposing only authorized views
  * - Extensions should carefully consider their privacy model and access control
  */
 abstract contract UCEF is ERC20 {
+    // Event type constants for Private Events
+    bytes32 public constant EVENT_TYPE_TRANSFER = keccak256("Transfer(address,address,uint256)");
+    bytes32 public constant EVENT_TYPE_APPROVAL = keccak256("Approval(address,address,uint256)");
+
     mapping(address account => uint256) private _balances;
     uint256 private _totalSupply;
     mapping(address account => mapping(address spender => uint256)) private _allowances;
+
+    /**
+     * @dev Private Event for selective visibility of on-chain events
+     * @param allowedViewers List of addresses authorized to view the event
+     * @param eventType The keccak256 hash of the original event signature
+     * @param payload The ABI-encoded event arguments
+     */
+    event PrivateEvent(
+        address[] allowedViewers,
+        bytes32 indexed eventType,
+        bytes payload
+    );
 
     /**
      * @dev Thrown when an unauthorized address attempts to view a balance
@@ -125,7 +152,7 @@ abstract contract UCEF is ERC20 {
             }
         }
 
-        emit Transfer(address(0), address(0), 0);
+        _emitTransferEvent(from, to, value);
     }
 
     /**
@@ -194,7 +221,7 @@ abstract contract UCEF is ERC20 {
         }
         _allowances[owner][spender] = value;
         if (emitEvent) {
-            emit Approval(address(0), address(0), 0);
+            _emitApprovalEvent(owner, spender, value);
         }
     }
 
@@ -227,6 +254,94 @@ abstract contract UCEF is ERC20 {
             unchecked {
                 _approve(owner, spender, currentAllowance - value, false);
             }
+        }
+    }
+
+    /**
+     * @dev Internal function to emit Transfer events
+     * Can be overridden by derived contracts to implement custom emission logic
+     * Default implementation emits private events with selective visibility
+     * @param from The sending address (address(0) for minting)
+     * @param to The receiving address (address(0) for burning)
+     * @param value The amount of tokens transferred
+     */
+    function _emitTransferEvent(address from, address to, uint256 value) internal virtual {
+        address[] memory allowedViewers = _getTransferEventViewers(from, to);
+        bytes memory payload = abi.encode(from, to, value);
+
+        emit PrivateEvent(allowedViewers, EVENT_TYPE_TRANSFER, payload);
+    }
+
+    /**
+     * @dev Internal function to determine who can view Transfer events
+     * Can be overridden by derived contracts to implement custom viewer logic
+     * Default implementation: only sender and receiver can view
+     * @param from The sending address
+     * @param to The receiving address
+     * @return allowedViewers Array of addresses authorized to view this transfer
+     */
+    function _getTransferEventViewers(
+        address from,
+        address to
+    ) internal view virtual returns (address[] memory allowedViewers) {
+        // Count unique non-zero addresses
+        uint256 viewerCount = 0;
+        if (from != address(0)) viewerCount++;
+        if (to != address(0) && to != from) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        if (from != address(0)) {
+            allowedViewers[index++] = from;
+        }
+        if (to != address(0) && to != from) {
+            allowedViewers[index] = to;
+        }
+    }
+
+    /**
+     * @dev Internal function to emit Approval events
+     * Can be overridden by derived contracts to implement custom emission logic
+     * Default implementation emits private events with selective visibility
+     * @param owner The address that owns the tokens
+     * @param spender The address that can spend the tokens
+     * @param value The amount of tokens approved
+     */
+    function _emitApprovalEvent(address owner, address spender, uint256 value) internal virtual {
+        address[] memory allowedViewers = _getApprovalEventViewers(owner, spender);
+        bytes memory payload = abi.encode(owner, spender, value);
+
+        emit PrivateEvent(allowedViewers, EVENT_TYPE_APPROVAL, payload);
+    }
+
+    /**
+     * @dev Internal function to determine who can view Approval events
+     * Can be overridden by derived contracts to implement custom viewer logic
+     * Default implementation: only owner and spender can view
+     * @param owner The address that owns the tokens
+     * @param spender The address that can spend the tokens
+     * @return allowedViewers Array of addresses authorized to view this approval
+     */
+    function _getApprovalEventViewers(
+        address owner,
+        address spender
+    ) internal view virtual returns (address[] memory allowedViewers) {
+        // Count unique non-zero addresses
+        uint256 viewerCount = 0;
+        if (owner != address(0)) viewerCount++;
+        if (spender != address(0) && spender != owner) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        if (owner != address(0)) {
+            allowedViewers[index++] = owner;
+        }
+        if (spender != address(0) && spender != owner) {
+            allowedViewers[index] = spender;
         }
     }
 } 
