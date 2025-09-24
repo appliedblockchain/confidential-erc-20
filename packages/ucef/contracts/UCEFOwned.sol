@@ -8,13 +8,19 @@ import {UCEF} from "./UCEF.sol";
 /**
  * @title UCEFOwned
  * @dev Extension for UCEF token that implements a simple owner-based authorization model.
- * In this model, only the account owner can view their own balance.
+ * In this model, only the account owner can view their own balance and related events.
  *
  * This implementation provides the strictest privacy model where each user can only
- * see their own balance and no one else's.
+ * see their own balance and events, with no visibility into other accounts.
+ *
+ * Event Behavior:
+ * - Transfer events: Only visible to the account owner involved in the transfer
+ * - Approval events: Only visible to the token owner (not the spender)
+ * - No third parties can view any events, maintaining maximum privacy
  *
  * Security considerations:
  * - Each account can only be accessed by its owner
+ * - Event visibility follows the same strict owner-only model
  * - Unauthorized access attempts will revert with UCEFUnauthorizedBalanceAccess
  * - No administrative override is possible
  */
@@ -54,5 +60,19 @@ contract UCEFOwned is UCEF {
             revert UCEFUnauthorizedBalanceAccess(msg.sender, account);
         }
         return true;
+    }
+
+    /**
+     * @dev Override to implement strict owner-only event visibility for approvals
+     * Only the token owner can view approval events (not the spender)
+     * @param owner The address that owns the tokens
+     * @return allowedViewers Array containing only the token owner
+     */
+    function _getApprovalEventViewers(
+        address owner,
+        address /* spender */
+    ) internal view virtual override returns (address[] memory allowedViewers) {
+        allowedViewers = new address[](1);
+        allowedViewers[0] = owner;
     }
 }
