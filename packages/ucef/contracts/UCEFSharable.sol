@@ -12,23 +12,33 @@ import {UCEF} from "./UCEF.sol";
  * Features:
  * - Account owners can grant and revoke balance viewing permissions
  * - Multiple viewers can be authorized per account
- * - Optional supervisor with universal balance viewing privileges
+ * - Optional supervisor with universal balance and event viewing privileges
  * - Supervisor can be permanently disabled by setting to zero address
- * - Clear permission management through events
+ * - Events for selective visibility of permission changes
+ *
+ * Event Behavior:
+ * - Transfer events: Visible to sender, receiver, and supervisor (if enabled)
+ * - Approval events: Visible to owner, spender, and supervisor (if enabled)
+ * - ViewerPermissionUpdated events: Visible to account, viewer, and supervisor (if enabled)
+ * - SupervisorUpdated events: Visible only to old and new supervisor
  *
  * Security considerations:
  * - Only account owners can manage their viewing permissions
  * - Viewers can only see balances of accounts that have explicitly granted them permission
- * - When enabled, the supervisor has visibility into all account balances
+ * - When enabled, the supervisor has visibility into all account balances and events
  * - Only the current supervisor can update the supervisor address
  * - Setting supervisor to zero address permanently disables supervision
  * - Once supervision is disabled, it cannot be re-enabled
- * - Permission changes are tracked through events for auditability
+ * - Permission changes are tracked through events for auditability while maintaining privacy
  */
 contract UCEFSharable is UCEF {
+    // Event type constants for Private Events
+    bytes32 public constant EVENT_TYPE_VIEWER_PERMISSION_UPDATED = keccak256("ViewerPermissionUpdated(address,address,bool)");
+    bytes32 public constant EVENT_TYPE_SUPERVISOR_UPDATED = keccak256("SupervisorUpdated(address,address)");
+
     // Mapping from account address to viewer address to permission status
     mapping(address account => mapping(address viewer => bool)) private _authorizedViewers;
-    
+
     // Supervisor address for auditing purposes (zero address means supervision is permanently disabled)
     address private _supervisor;
 
@@ -118,12 +128,13 @@ contract UCEFSharable is UCEF {
      * @dev Internal function to update the supervisor address
      * @param newSupervisor Address to set as the new supervisor (zero address permanently disables supervision)
      *
-     * Emits a {SupervisorUpdated} event
+     * Emits a SupervisorUpdated event visible only to old and new supervisor
      */
     function _updateSupervisor(address newSupervisor) internal virtual {
         address oldSupervisor = _supervisor;
         _supervisor = newSupervisor;
-        emit SupervisorUpdated(oldSupervisor, newSupervisor);
+
+        _emitSupervisorUpdatedEvent(oldSupervisor, newSupervisor);
     }
 
     /**
@@ -133,7 +144,7 @@ contract UCEFSharable is UCEF {
      * Requirements:
      * - Only the account owner can grant viewing permissions
      *
-     * Emits a {ViewerPermissionUpdated} event
+     * Emits a ViewerPermissionUpdated event
      */
     function grantViewer(address viewer) public virtual {
         _updateViewerPermission(msg.sender, viewer, true);
@@ -146,7 +157,7 @@ contract UCEFSharable is UCEF {
      * Requirements:
      * - Only the account owner can revoke viewing permissions
      *
-     * Emits a {ViewerPermissionUpdated} event
+     * Emits a ViewerPermissionUpdated event
      */
     function revokeViewer(address viewer) public virtual {
         _updateViewerPermission(msg.sender, viewer, false);
@@ -168,7 +179,7 @@ contract UCEFSharable is UCEF {
      * @param viewer The viewer whose permissions are being updated
      * @param status The new permission status
      *
-     * Emits a {ViewerPermissionUpdated} event
+     * Emits a ViewerPermissionUpdated event
      */
     function _updateViewerPermission(
         address account,
@@ -176,7 +187,7 @@ contract UCEFSharable is UCEF {
         bool status
     ) internal virtual {
         _authorizedViewers[account][viewer] = status;
-        emit ViewerPermissionUpdated(account, viewer, status);
+        _emitViewerPermissionUpdatedEvent(account, viewer, status);
     }
 
     /**
@@ -200,5 +211,157 @@ contract UCEFSharable is UCEF {
             revert UCEFSharableUnauthorizedViewer(msg.sender);
         }
         return true;
+    }
+
+    /**
+     * @dev Override to implement supervisor-inclusive event visibility for transfers
+     * Supervisor can view all transfers for oversight alongside the involved parties
+     * @param from The sending address
+     * @param to The receiving address
+     * @return allowedViewers Array containing sender, receiver, and supervisor (if enabled)
+     */
+    function _getTransferEventViewers(
+        address from,
+        address to
+    ) internal view virtual override returns (address[] memory allowedViewers) {
+        // Count unique non-zero addresses including supervisor (if enabled)
+        uint256 viewerCount = 0;
+        if (_supervisor != address(0)) viewerCount++; // Include supervisor if enabled
+        if (from != address(0) && from != _supervisor) viewerCount++;
+        if (to != address(0) && to != from && to != _supervisor) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        if (_supervisor != address(0)) {
+            allowedViewers[index++] = _supervisor;
+        }
+        if (from != address(0) && from != _supervisor) {
+            allowedViewers[index++] = from;
+        }
+        if (to != address(0) && to != from && to != _supervisor) {
+            allowedViewers[index] = to;
+        }
+    }
+
+    /**
+     * @dev Override to implement supervisor-inclusive event visibility for approvals
+     * Supervisor can view all approvals for oversight alongside owner and spender
+     * @param owner The address that owns the tokens
+     * @param spender The address that can spend the tokens
+     * @return allowedViewers Array containing owner, spender, and supervisor (if enabled)
+     */
+    function _getApprovalEventViewers(
+        address owner,
+        address spender
+    ) internal view virtual override returns (address[] memory allowedViewers) {
+        // Count unique addresses including supervisor (if enabled)
+        uint256 viewerCount = 0;
+        if (_supervisor != address(0)) viewerCount++; // Include supervisor if enabled
+        if (owner != _supervisor) viewerCount++;
+        if (spender != owner && spender != _supervisor) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        if (_supervisor != address(0)) {
+            allowedViewers[index++] = _supervisor;
+        }
+        if (owner != _supervisor) {
+            allowedViewers[index++] = owner;
+        }
+        if (spender != owner && spender != _supervisor) {
+            allowedViewers[index] = spender;
+        }
+    }
+
+    /**
+     * @dev Internal function to emit ViewerPermissionUpdated events
+     * Can be overridden by derived contracts to implement custom emission logic
+     * Default implementation: visible to account, viewer, and supervisor (if enabled)
+     * @param account The account whose permissions were updated
+     * @param viewer The viewer whose permissions were updated
+     * @param status The new permission status
+     */
+    function _emitViewerPermissionUpdatedEvent(address account, address viewer, bool status) internal virtual {
+        address[] memory allowedViewers = _getViewerPermissionUpdatedEventViewers(account, viewer);
+        bytes memory payload = abi.encode(account, viewer, status);
+
+        emit PrivateEvent(allowedViewers, EVENT_TYPE_VIEWER_PERMISSION_UPDATED, payload);
+    }
+
+    /**
+     * @dev Internal function to determine who can view ViewerPermissionUpdated events
+     * @param account The account whose permissions were updated
+     * @param viewer The viewer whose permissions were updated
+     * @return allowedViewers Array containing account, viewer, and supervisor (if enabled)
+     */
+    function _getViewerPermissionUpdatedEventViewers(
+        address account,
+        address viewer
+    ) internal view returns (address[] memory allowedViewers) {
+        // Count unique addresses including supervisor (if enabled)
+        uint256 viewerCount = 0;
+        if (_supervisor != address(0)) viewerCount++; // Include supervisor if enabled
+        if (account != _supervisor) viewerCount++;
+        if (viewer != account && viewer != _supervisor) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        if (_supervisor != address(0)) {
+            allowedViewers[index++] = _supervisor;
+        }
+        if (account != _supervisor) {
+            allowedViewers[index++] = account;
+        }
+        if (viewer != account && viewer != _supervisor) {
+            allowedViewers[index] = viewer;
+        }
+    }
+
+    /**
+     * @dev Internal function to emit SupervisorUpdated events
+     * Can be overridden by derived contracts to implement custom emission logic
+     * Default implementation: only old and new supervisor can view supervisor changes
+     * @param previousSupervisor The address of the previous supervisor
+     * @param newSupervisor The address of the new supervisor
+     */
+    function _emitSupervisorUpdatedEvent(address previousSupervisor, address newSupervisor) internal virtual {
+        address[] memory allowedViewers = _getSupervisorUpdatedEventViewers(previousSupervisor, newSupervisor);
+        bytes memory payload = abi.encode(previousSupervisor, newSupervisor);
+
+        emit PrivateEvent(allowedViewers, EVENT_TYPE_SUPERVISOR_UPDATED, payload);
+    }
+
+    /**
+     * @dev Internal function to determine who can view SupervisorUpdated events
+     * Default implementation: only old and new supervisor should see supervisor changes
+     * @param previousSupervisor The address of the previous supervisor
+     * @param newSupervisor The address of the new supervisor
+     * @return allowedViewers Array containing only old and new supervisor
+     */
+    function _getSupervisorUpdatedEventViewers(
+        address previousSupervisor,
+        address newSupervisor
+    ) internal pure returns (address[] memory allowedViewers) {
+        // Count unique non-zero addresses
+        uint256 viewerCount = 0;
+        if (previousSupervisor != address(0)) viewerCount++;
+        if (newSupervisor != address(0) && newSupervisor != previousSupervisor) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        if (previousSupervisor != address(0)) {
+            allowedViewers[index++] = previousSupervisor;
+        }
+        if (newSupervisor != address(0) && newSupervisor != previousSupervisor) {
+            allowedViewers[index] = newSupervisor;
+        }
     }
 } 
