@@ -222,7 +222,8 @@ contract UCEFSharable is UCEF {
      */
     function _getTransferEventViewers(
         address from,
-        address to
+        address to,
+        uint256 /* value */
     ) internal view virtual override returns (address[] memory allowedViewers) {
         // Count unique non-zero addresses including supervisor (if enabled)
         uint256 viewerCount = 0;
@@ -254,7 +255,8 @@ contract UCEFSharable is UCEF {
      */
     function _getApprovalEventViewers(
         address owner,
-        address spender
+        address spender,
+        uint256 /* value */
     ) internal view virtual override returns (address[] memory allowedViewers) {
         // Count unique addresses including supervisor (if enabled)
         uint256 viewerCount = 0;
@@ -286,7 +288,7 @@ contract UCEFSharable is UCEF {
      * @param status The new permission status
      */
     function _emitViewerPermissionUpdatedEvent(address account, address viewer, bool status) internal virtual {
-        address[] memory allowedViewers = _getViewerPermissionUpdatedEventViewers(account, viewer);
+        address[] memory allowedViewers = _getViewerPermissionUpdatedEventViewers(account, viewer, status);
         bytes memory payload = abi.encode(account, viewer, status);
 
         emit PrivateEvent(allowedViewers, EVENT_TYPE_VIEWER_PERMISSION_UPDATED, payload);
@@ -296,12 +298,16 @@ contract UCEFSharable is UCEF {
      * @dev Internal function to determine who can view ViewerPermissionUpdated events
      * @param account The account whose permissions were updated
      * @param viewer The viewer whose permissions were updated
+     * @param status The new permission status
      * @return allowedViewers Array containing account, viewer, and supervisor (if enabled)
      */
     function _getViewerPermissionUpdatedEventViewers(
         address account,
-        address viewer
+        address viewer,
+        bool status
     ) internal view virtual returns (address[] memory allowedViewers) {
+        status; // Available for derived contracts
+
         // Count unique addresses including supervisor (if enabled)
         uint256 viewerCount = 0;
         if (_supervisor != address(0)) viewerCount++; // Include supervisor if enabled
