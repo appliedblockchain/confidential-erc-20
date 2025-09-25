@@ -221,7 +221,7 @@ contract UCEFRegulated is UCEF {
     function _getRegulatorUpdatedEventViewers(
         address previousRegulator,
         address newRegulator
-    ) internal pure returns (address[] memory allowedViewers) {
+    ) internal view virtual returns (address[] memory allowedViewers) {
         // Count unique non-zero addresses
         uint256 viewerCount = 0;
         if (previousRegulator != address(0)) viewerCount++;
