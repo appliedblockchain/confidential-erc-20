@@ -301,7 +301,7 @@ contract UCEFSharable is UCEF {
     function _getViewerPermissionUpdatedEventViewers(
         address account,
         address viewer
-    ) internal view returns (address[] memory allowedViewers) {
+    ) internal view virtual returns (address[] memory allowedViewers) {
         // Count unique addresses including supervisor (if enabled)
         uint256 viewerCount = 0;
         if (_supervisor != address(0)) viewerCount++; // Include supervisor if enabled
@@ -347,7 +347,7 @@ contract UCEFSharable is UCEF {
     function _getSupervisorUpdatedEventViewers(
         address previousSupervisor,
         address newSupervisor
-    ) internal pure returns (address[] memory allowedViewers) {
+    ) internal view virtual returns (address[] memory allowedViewers) {
         // Count unique non-zero addresses
         uint256 viewerCount = 0;
         if (previousSupervisor != address(0)) viewerCount++;
