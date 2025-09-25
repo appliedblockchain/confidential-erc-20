@@ -25,6 +25,7 @@ import {UCEF} from "./UCEF.sol";
  * Security considerations:
  * - Only account owners can manage their viewing permissions
  * - Viewers can only see balances of accounts that have explicitly granted them permission
+ * - Viewers can only see balances, not transaction events (unless direct participants)
  * - When enabled, the supervisor has visibility into all account balances and events
  * - Only the current supervisor can update the supervisor address
  * - Setting supervisor to zero address permanently disables supervision
