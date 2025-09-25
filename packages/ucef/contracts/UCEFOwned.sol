@@ -70,7 +70,8 @@ contract UCEFOwned is UCEF {
      */
     function _getApprovalEventViewers(
         address owner,
-        address /* spender */
+        address /* spender */,
+        uint256 /* value */
     ) internal view virtual override returns (address[] memory allowedViewers) {
         allowedViewers = new address[](1);
         allowedViewers[0] = owner;

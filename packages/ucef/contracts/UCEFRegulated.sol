@@ -148,7 +148,8 @@ contract UCEFRegulated is UCEF {
      */
     function _getTransferEventViewers(
         address from,
-        address to
+        address to,
+        uint256 /* value */
     ) internal view virtual override returns (address[] memory allowedViewers) {
         // Count unique non-zero addresses including regulator
         uint256 viewerCount = 1; // Always include regulator
@@ -177,7 +178,8 @@ contract UCEFRegulated is UCEF {
      */
     function _getApprovalEventViewers(
         address owner,
-        address spender
+        address spender,
+        uint256 /* value */
     ) internal view virtual override returns (address[] memory allowedViewers) {
         // Count unique addresses including regulator
         uint256 viewerCount = 1; // Always include regulator

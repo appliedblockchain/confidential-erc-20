@@ -266,7 +266,7 @@ abstract contract UCEF is ERC20 {
      * @param value The amount of tokens transferred
      */
     function _emitTransferEvent(address from, address to, uint256 value) internal virtual {
-        address[] memory allowedViewers = _getTransferEventViewers(from, to);
+        address[] memory allowedViewers = _getTransferEventViewers(from, to, value);
         bytes memory payload = abi.encode(from, to, value);
 
         emit PrivateEvent(allowedViewers, EVENT_TYPE_TRANSFER, payload);
@@ -278,12 +278,16 @@ abstract contract UCEF is ERC20 {
      * Default implementation: only sender and receiver can view
      * @param from The sending address
      * @param to The receiving address
+     * @param value The amount of tokens transferred (available for derived contracts)
      * @return allowedViewers Array of addresses authorized to view this transfer
      */
     function _getTransferEventViewers(
         address from,
-        address to
+        address to,
+        uint256 value
     ) internal view virtual returns (address[] memory allowedViewers) {
+        value; // Available for derived contracts
+
         // Count unique non-zero addresses
         uint256 viewerCount = 0;
         if (from != address(0)) viewerCount++;
@@ -310,7 +314,7 @@ abstract contract UCEF is ERC20 {
      * @param value The amount of tokens approved
      */
     function _emitApprovalEvent(address owner, address spender, uint256 value) internal virtual {
-        address[] memory allowedViewers = _getApprovalEventViewers(owner, spender);
+        address[] memory allowedViewers = _getApprovalEventViewers(owner, spender, value);
         bytes memory payload = abi.encode(owner, spender, value);
 
         emit PrivateEvent(allowedViewers, EVENT_TYPE_APPROVAL, payload);
@@ -322,12 +326,16 @@ abstract contract UCEF is ERC20 {
      * Default implementation: only owner and spender can view
      * @param owner The address that owns the tokens
      * @param spender The address that can spend the tokens
+     * @param value The amount of tokens approved (available for derived contracts)
      * @return allowedViewers Array of addresses authorized to view this approval
      */
     function _getApprovalEventViewers(
         address owner,
-        address spender
+        address spender,
+        uint256 value
     ) internal view virtual returns (address[] memory allowedViewers) {
+        value; // Available for derived contracts
+
         // Count unique non-zero addresses
         uint256 viewerCount = 0;
         if (owner != address(0)) viewerCount++;
