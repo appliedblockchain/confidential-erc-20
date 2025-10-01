@@ -61,19 +61,4 @@ contract UCEFOwned is UCEF {
         }
         return true;
     }
-
-    /**
-     * @dev Override to implement strict owner-only event visibility for approvals
-     * Only the token owner can view approval events (not the spender)
-     * @param owner The address that owns the tokens
-     * @return allowedViewers Array containing only the token owner
-     */
-    function _getApprovalEventViewers(
-        address owner,
-        address /* spender */,
-        uint256 /* value */
-    ) internal view virtual override returns (address[] memory allowedViewers) {
-        allowedViewers = new address[](1);
-        allowedViewers[0] = owner;
-    }
 }
