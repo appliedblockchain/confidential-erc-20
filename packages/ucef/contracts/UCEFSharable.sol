@@ -34,7 +34,20 @@ import {UCEF} from "./UCEF.sol";
  */
 contract UCEFSharable is UCEF {
     // Event type constants for Private Events
+    /**
+    * @notice ViewerPermissionUpdated event parameter mapping:
+    *   - address param0: account - The account whose balance viewing permissions were modified
+    *   - address param1: viewer  - The address that was granted or revoked viewing permission
+    *   - bool param2: status     - The new permission status (true for granted, false for revoked)
+    * @custom:signature ViewerPermissionUpdated(address account, address viewer, bool status)
+    */
     bytes32 public constant EVENT_TYPE_VIEWER_PERMISSION_UPDATED = keccak256("ViewerPermissionUpdated(address,address,bool)");
+    /**
+    * @notice SupervisorUpdated event parameter mapping:
+    *   - address param0: previousSupervisor - Address of the previous supervisor
+    *   - address param1: newSupervisor      - Address of the new supervisor (zero address means supervision permanently disabled)
+    * @custom:signature SupervisorUpdated(address previousSupervisor, address newSupervisor)
+    */
     bytes32 public constant EVENT_TYPE_SUPERVISOR_UPDATED = keccak256("SupervisorUpdated(address,address)");
 
     // Mapping from account address to viewer address to permission status
