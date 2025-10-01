@@ -42,7 +42,21 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  */
 abstract contract UCEF is ERC20 {
     // Event type constants for Private Events
+    /**
+    * @notice Transfer event parameter mapping:
+    *   - address param0: from  - Token sender (address(0) for minting)
+    *   - address param1: to    - Token receiver (address(0) for burning)
+    *   - uint256 param2: value - Amount of tokens transferred
+    * @custom:signature Transfer(address from, address to, uint256 value)
+    */
     bytes32 public constant EVENT_TYPE_TRANSFER = keccak256("Transfer(address,address,uint256)");
+    /**
+    * @notice Approval event parameter mapping:
+    *   - address param0: from  - Token sender (address(0) for minting)
+    *   - address param1: to    - Token receiver (address(0) for burning)
+    *   - uint256 param2: value - Amount of tokens approved
+    * @custom:signature Approval(address from, address to, uint256 value)
+    */
     bytes32 public constant EVENT_TYPE_APPROVAL = keccak256("Approval(address,address,uint256)");
 
     mapping(address account => uint256) private _balances;

@@ -31,6 +31,12 @@ import {UCEF} from "./UCEF.sol";
  */
 contract UCEFRegulated is UCEF {
     // Event type constant for Private Events
+    /**
+    * @notice RegulatorUpdated event parameter mapping:
+    *   - address param0: previousRegulator - Address of the previous regulator
+    *   - address param1: newRegulator      - Address of the new regulator
+    * @custom:signature RegulatorUpdated(address previousRegulator, address newRegulator)
+    */
     bytes32 public constant EVENT_TYPE_REGULATOR_UPDATED = keccak256("RegulatorUpdated(address,address)");
 
     address private _regulator;
