@@ -4,7 +4,7 @@
 pragma solidity ^0.8.20;
 
 import {UCEF} from "../UCEF.sol";
-import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
+import {PrivateVotes} from "../utils/PrivateVotes.sol";
 import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol";
 
 /**
@@ -20,7 +20,7 @@ import {Checkpoints} from "@openzeppelin/contracts/utils/structs/Checkpoints.sol
  * By default, token balance does not account for voting power. This makes transfers cheaper. The downside is that it
  * requires users to delegate to themselves in order to activate checkpoints and have their voting power tracked.
  */
-abstract contract UCEFVotes is UCEF, Votes {
+abstract contract UCEFVotes is UCEF, PrivateVotes {
     /**
      * @dev Total supply cap has been exceeded, introducing a risk of votes overflowing.
      */
