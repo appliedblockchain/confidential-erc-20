@@ -36,8 +36,8 @@
     "@openzeppelin/contracts": "4.9.6",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
     "@tokenysolutions/t-rex": "4.1.6",
-    "@typechain/ethers-v6": "^0.5.1",
-    "@typechain/hardhat": "^9.1.0",
+    "@typechain/ethers-v6": "0.5.1",
+    "@typechain/hardhat": "9.1.0",
     "hardhat": "2.22.10"
   },
   "repository": {
