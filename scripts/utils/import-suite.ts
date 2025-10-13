@@ -15,7 +15,7 @@ import {
   ImplementationAuthority,
   ClaimIssuer,
   Identity,
-} from '../../typechain-types'
+} from '@appliedblockchain/ucef-3643/types'
 
 interface Suite {
   claimIssuerContract?: ClaimIssuer
