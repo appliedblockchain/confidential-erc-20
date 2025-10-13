@@ -3,6 +3,7 @@
 pragma solidity ^0.8.17;
 
 import {Token} from "@tokenysolutions/t-rex/contracts/token/Token.sol";
+import {IIdentityRegistry} from "@tokenysolutions/t-rex/contracts/registry/interface/IIdentityRegistry.sol";
 
 contract UCEF3643 is Token {
 
@@ -151,12 +152,15 @@ contract UCEF3643 is Token {
 
     /**
      * @dev Internal function to determine if an address is authorized to view a balance
-     * This implementation only owner is allowed to see balance. Can be overridden on derived contracts.
+     * This implementation only owner or sender's identity are allowed to see balance. Can be overridden on derived contracts.
      * @param account The address to check authorization for
      * @return bool True if authorized, false otherwise
      */
     function _authorizeBalance(address account) internal view virtual returns (bool) {
-        require(msg.sender == account, 'Unauthorized balance access');
+        require(
+            msg.sender == account || address(IIdentityRegistry(_tokenIdentityRegistry).identity(msg.sender)) == account, 
+            'Unauthorized balance access'
+        );
         return true;
     }
 
