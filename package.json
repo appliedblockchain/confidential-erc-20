@@ -11,7 +11,8 @@
     "coverage": "npx hardhat coverage",
     "script": "script() { npx hardhat --network ${2:-localhost} run scripts/${1}.ts; }; script",
     "clean:ignition": "rm -rf .ignition && rm -rf ./ignition/deployments",
-    "deploy:module": "deploy() { npx hardhat ignition deploy ignition/modules/$1.ts --network ${2:-localhost} --deployment-id ${2:-localhost} --reset; }; deploy",
+    "clean:all": "pnpm clean && pnpm clean:ignition",
+    "deploy:module": "deploy() { npx hardhat ignition deploy ignition/modules/$1.ts --network ${2:-localhost} --deployment-id ${2:-localhost} --reset; }; deploy $@",
     "clean": "npx hardhat clean",
     "clean:all": "pnpm clean && pnpm -r --if-present clean",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx}\" --ignore-path .prettierignore",
@@ -22,9 +23,9 @@
     "ucef-3643": "pnpm --filter @appliedblockchain/ucef-3643"
   },
   "devDependencies": {
-    "@appliedblockchain/silentdatarollup-core": "1.0.6",
-    "@appliedblockchain/silentdatarollup-ethers-provider": "1.0.6",
-    "@appliedblockchain/silentdatarollup-hardhat-plugin": "1.0.6",
+    "@appliedblockchain/silentdatarollup-core": "1.0.8",
+    "@appliedblockchain/silentdatarollup-ethers-provider": "1.0.8",
+    "@appliedblockchain/silentdatarollup-hardhat-plugin": "1.0.8",
     "@appliedblockchain/ucef": "workspace:*",
     "@appliedblockchain/ucef-3643": "workspace:*",
     "@nomicfoundation/hardhat-chai-matchers": "2.0.7",
@@ -59,7 +60,8 @@
     "solidity-coverage": "0.8.16",
     "ts-node": "10.9.2",
     "typechain": "8.3.2",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "xerc20": "https://github.com/defi-wonderland/xERC20/archive/refs/tags/v1.0.0.tar.gz"
   },
   "pnpm": {
     "patchedDependencies": {
