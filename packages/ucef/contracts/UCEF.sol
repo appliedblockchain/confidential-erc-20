@@ -85,8 +85,10 @@ abstract contract UCEF is ERC20 {
     /**
      * @dev Thrown when an unauthorized address attempts to mint tokens
      * @param sender The address attempting to mint
+     * @param to The address that would have received the minted tokens
+     * @param amount The number of tokens that were attempted to be minted
      */
-    error UCEFUnauthorizedMint(address sender);
+    error UCEFUnauthorizedMint(address sender, address to, uint256 amount);
 
     /**
      * @dev Constructor that sets the name and symbol of the token

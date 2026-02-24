@@ -50,7 +50,7 @@ describe('UCEFCustom', function () {
     it('Should revert when non-minter tries to mint tokens', async function () {
       await expect(token.connect(user1).mint(user1Address, ABOVE_THRESHOLD_AMOUNT))
         .to.be.revertedWithCustomError(token, 'UCEFUnauthorizedMint')
-        .withArgs(user1Address)
+        .withArgs(user1Address, user1Address, ABOVE_THRESHOLD_AMOUNT)
     })
   })
 

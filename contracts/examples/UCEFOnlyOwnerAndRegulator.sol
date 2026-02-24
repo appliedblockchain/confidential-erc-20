@@ -16,9 +16,9 @@ contract UCEFOnlyOwnerAndRegulator is UCEFRegulated, AccessControl {
         _mint(account, amount);
     }
 
-    function _authorizeMint(address, uint256) internal view override {
+    function _authorizeMint(address to, uint256 amount) internal view override {
         if (!hasRole(MINTER_ROLE, msg.sender)) {
-            revert UCEFUnauthorizedMint(msg.sender);
+            revert UCEFUnauthorizedMint(msg.sender, to, amount);
         }
     }
 }
