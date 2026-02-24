@@ -51,6 +51,12 @@ describe('UCEFOnlyOwnerSharable', function () {
       const balance = await token.connect(user1).balanceOf(user1Address)
       expect(balance).to.equal(INITIAL_SUPPLY)
     })
+
+    it('Should revert when non-minter tries to mint tokens', async function () {
+      await expect(token.connect(user1).mint(user1Address, INITIAL_SUPPLY))
+        .to.be.revertedWithCustomError(token, 'UCEFUnauthorizedMint')
+        .withArgs(user1Address, user1Address, INITIAL_SUPPLY)
+    })
   })
 
   describe('Transactions', function () {
