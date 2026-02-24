@@ -2,15 +2,18 @@
 pragma solidity ^0.8.24;
 
 import {UCEF} from "@appliedblockchain/ucef/contracts/UCEF.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract UCEFCustom is UCEF {
+contract UCEFCustom is UCEF, AccessControl {
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
     address public regulator;
-    address private _minter;
     uint256 private constant BALANCE_THRESHOLD = 10_000 ether;
 
     constructor() UCEF("UCEFCustom", "uOCT") {
         regulator = msg.sender;
-        _minter = msg.sender;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(MINTER_ROLE, msg.sender);
     }
 
     function mint(address account, uint256 amount) public {
@@ -18,7 +21,7 @@ contract UCEFCustom is UCEF {
     }
 
     function _authorizeMint(address, uint256) internal view override {
-        if (msg.sender != _minter) {
+        if (!hasRole(MINTER_ROLE, msg.sender)) {
             revert UCEFUnauthorizedMint(msg.sender);
         }
     }
