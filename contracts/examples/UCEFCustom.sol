@@ -5,14 +5,22 @@ import {UCEF} from "@appliedblockchain/ucef/contracts/UCEF.sol";
 
 contract UCEFCustom is UCEF {
     address public regulator;
+    address private _minter;
     uint256 private constant BALANCE_THRESHOLD = 10_000 ether;
 
     constructor() UCEF("UCEFCustom", "uOCT") {
         regulator = msg.sender;
+        _minter = msg.sender;
     }
 
     function mint(address account, uint256 amount) public {
         _mint(account, amount);
+    }
+
+    function _authorizeMint(address, uint256) internal view override {
+        if (msg.sender != _minter) {
+            revert UCEFUnauthorizedMint(msg.sender);
+        }
     }
 
     /**

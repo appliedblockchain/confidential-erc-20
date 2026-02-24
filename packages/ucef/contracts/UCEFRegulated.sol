@@ -29,7 +29,7 @@ import {UCEF} from "./UCEF.sol";
  * - Only the current regulator can update the regulator address
  * - Zero address checks prevent locking of regulatory functions
  */
-contract UCEFRegulated is UCEF {
+abstract contract UCEFRegulated is UCEF {
     // Event type constant for Private Events
     /**
     * @notice RegulatorUpdated event parameter mapping:

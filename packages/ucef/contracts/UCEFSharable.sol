@@ -32,7 +32,7 @@ import {UCEF} from "./UCEF.sol";
  * - Once supervision is disabled, it cannot be re-enabled
  * - Permission changes are tracked through events for auditability while maintaining privacy
  */
-contract UCEFSharable is UCEF {
+abstract contract UCEFSharable is UCEF {
     // Event type constants for Private Events
     /**
     * @notice ViewerPermissionUpdated event parameter mapping:

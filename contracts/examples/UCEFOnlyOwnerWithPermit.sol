@@ -5,16 +5,23 @@ import {UCEFOwned, UCEF} from "@appliedblockchain/ucef/contracts/UCEFOwned.sol";
 import {UCEFPermit} from "@appliedblockchain/ucef/contracts/extensions/UCEFPermit.sol";
 
 contract UCEFOnlyOwnerWithPermit is UCEFOwned, UCEFPermit {
-    constructor() UCEFOwned("UCEFOnlyOwner", "uOOT") UCEFPermit("UCEFOnlyOwner") {}
+    address private _minter;
+
+    constructor() UCEFOwned("UCEFOnlyOwner", "uOOT") UCEFPermit("UCEFOnlyOwner") {
+        _minter = msg.sender;
+    }
 
     function mint(address account, uint256 amount) public {
         _mint(account, amount);
     }
 
-    /**
-     * @dev Extension requires overriding _authorizeBalance base function. Calling super._authorizeBalance to reuse base function logic.
-     */
     function _authorizeBalance(address account) internal view override (UCEF, UCEFOwned) returns (bool) {
         return super._authorizeBalance(account);
+    }
+
+    function _authorizeMint(address, uint256) internal view override {
+        if (msg.sender != _minter) {
+            revert UCEFUnauthorizedMint(msg.sender);
+        }
     }
 }
