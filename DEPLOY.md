@@ -24,7 +24,7 @@ SILENTDATA_CHAIN_ID=<silent_data_chain_id>
 ### 2. Compile Contracts
 
 ```bash
-pnpm compile
+pnpm compile:all
 ```
 
 ### 3. Deploy to Silent Data
@@ -50,7 +50,7 @@ pnpm install
 ### 2. Compile Contracts
 
 ```bash
-pnpm compile
+pnpm compile:all
 ```
 
 ### 3. Run Local Hardhat Node

@@ -25,3 +25,6 @@ dist
 .env.production.local
 
 .vscode
+
+.DS_Store
+out
