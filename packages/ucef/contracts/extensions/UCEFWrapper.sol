@@ -24,6 +24,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 abstract contract UCEFWrapper is UCEF {
     IUCEF private immutable _underlying;
 
+    bool private _wrapActive;
+
     /**
      * @dev The underlying token couldn't be wrapped.
      */
@@ -55,6 +57,15 @@ abstract contract UCEFWrapper is UCEF {
     }
 
     /**
+     * @dev Returns true if a wrap deposit mint is currently in progress.
+     * Implementors can check this inside `_authorizeMint` to allow deposit wrapping
+     * without granting general mint permissions.
+     */
+    function _isWrapping() internal view returns (bool) {
+        return _wrapActive;
+    }
+
+    /**
      * @dev Allow a user to deposit underlying tokens and mint the corresponding number of wrapped tokens.
      */
     function depositFor(address account, uint256 value) public virtual returns (bool) {
@@ -66,7 +77,9 @@ abstract contract UCEFWrapper is UCEF {
             revert ERC20InvalidReceiver(account);
         }
         SafeERC20.safeTransferFrom(_underlying, sender, address(this), value);
+        _wrapActive = true;
         _mint(account, value);
+        _wrapActive = false;
         return true;
     }
 
@@ -88,7 +101,9 @@ abstract contract UCEFWrapper is UCEF {
      */
     function _recover(address account) internal virtual returns (uint256) {
         uint256 value = _underlying.balanceOf(address(this)) - totalSupply();
+        _wrapActive = true;
         _mint(account, value);
+        _wrapActive = false;
         return value;
     }
 }

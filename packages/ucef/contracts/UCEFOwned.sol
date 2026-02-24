@@ -24,7 +24,7 @@ import {UCEF} from "./UCEF.sol";
  * - Unauthorized access attempts will revert with UCEFUnauthorizedBalanceAccess
  * - No administrative override is possible
  */
-contract UCEFOwned is UCEF {
+abstract contract UCEFOwned is UCEF {
 
     constructor(string memory name, string memory symbol) UCEF(name, symbol) {}
 

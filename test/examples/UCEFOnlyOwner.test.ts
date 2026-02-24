@@ -35,6 +35,22 @@ describe('UCEFOnlyOwner', function () {
     })
   })
 
+  describe('Minting', function () {
+    const MINT_AMOUNT = ethers.parseUnits('50', 18)
+
+    it('Should allow the minter to mint tokens', async function () {
+      await token.connect(owner).mint(user1Address, MINT_AMOUNT)
+      const balance = await token.connect(user1).balanceOf(user1Address)
+      expect(balance).to.equal(MINT_AMOUNT)
+    })
+
+    it('Should revert when non-minter tries to mint tokens', async function () {
+      await expect(token.connect(user1).mint(user1Address, MINT_AMOUNT))
+        .to.be.revertedWithCustomError(token, 'UCEFUnauthorizedMint')
+        .withArgs(user1Address, user1Address, MINT_AMOUNT)
+    })
+  })
+
   describe('Transactions', function () {
     beforeEach(async function () {
       // Transfer some tokens to user1 for testing

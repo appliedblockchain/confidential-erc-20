@@ -41,13 +41,16 @@ describe('UCEFCustom', function () {
   })
 
   describe('Minting', function () {
-    it('Should allow anyone to mint tokens', async function () {
-      await expect(token.connect(user1).mint(user1Address, ABOVE_THRESHOLD_AMOUNT))
-        .to.emit(token, 'Transfer')
-        .withArgs(ethers.ZeroAddress, ethers.ZeroAddress, 0n)
-
+    it('Should allow the minter to mint tokens', async function () {
+      await token.connect(regulator).mint(user1Address, ABOVE_THRESHOLD_AMOUNT)
       const balance = await token.connect(user1).balanceOf(user1Address)
       expect(balance).to.equal(ABOVE_THRESHOLD_AMOUNT)
+    })
+
+    it('Should revert when non-minter tries to mint tokens', async function () {
+      await expect(token.connect(user1).mint(user1Address, ABOVE_THRESHOLD_AMOUNT))
+        .to.be.revertedWithCustomError(token, 'UCEFUnauthorizedMint')
+        .withArgs(user1Address, user1Address, ABOVE_THRESHOLD_AMOUNT)
     })
   })
 

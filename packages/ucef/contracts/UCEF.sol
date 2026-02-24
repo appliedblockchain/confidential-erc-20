@@ -83,6 +83,14 @@ abstract contract UCEF is ERC20 {
     error UCEFUnauthorizedBalanceAccess(address sender, address account);
 
     /**
+     * @dev Thrown when an unauthorized address attempts to mint tokens
+     * @param sender The address attempting to mint
+     * @param to The address that would have received the minted tokens
+     * @param amount The number of tokens that were attempted to be minted
+     */
+    error UCEFUnauthorizedMint(address sender, address to, uint256 amount);
+
+    /**
      * @dev Constructor that sets the name and symbol of the token
      * @param name The name of the token
      * @param symbol The symbol of the token
@@ -104,6 +112,24 @@ abstract contract UCEF is ERC20 {
      * as it directly impacts the privacy of user balances
      */
     function _authorizeBalance(address account) internal view virtual returns (bool);
+
+    /**
+     * @dev Internal function to authorize a mint operation.
+     * Must be implemented by derived contracts to define mint authorization logic.
+     * Called automatically during every mint (when `from == address(0)` in `_update`).
+     *
+     * @param to The address that will receive the minted tokens
+     * @param amount The number of tokens to mint
+     *
+     * @notice Implementation behavior:
+     * - Should revert with UCEFUnauthorizedMint or a custom error if the caller is not authorized to mint
+     * - A no-op implementation (empty body) explicitly allows unrestricted minting
+     *
+     * @custom:security This function is abstract to force every concrete UCEF token to define
+     * a minting policy. Without an implementation the contract will not compile, preventing
+     * accidental deployment of tokens with unprotected minting.
+     */
+    function _authorizeMint(address to, uint256 amount) internal view virtual;
 
     /**
      * @dev Returns the balance of the specified account if authorized
@@ -141,6 +167,7 @@ abstract contract UCEF is ERC20 {
      */
     function _update(address from, address to, uint256 value) internal override virtual {
         if (from == address(0)) {
+            _authorizeMint(to, value);
             // Overflow check required: The rest of the code assumes that totalSupply never overflows
             _totalSupply += value;
         } else {

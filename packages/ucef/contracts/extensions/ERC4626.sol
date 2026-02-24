@@ -55,6 +55,8 @@ abstract contract ERC4626 is UCEF, IERC4626 {
     IUCEF private immutable _asset;
     uint8 private immutable _underlyingDecimals;
 
+    bool private _vaultDepositActive;
+
     /**
      * @dev Attempted to deposit more assets than the max amount for `receiver`.
      */
@@ -238,6 +240,15 @@ abstract contract ERC4626 is UCEF, IERC4626 {
     }
 
     /**
+     * @dev Returns true if a vault deposit mint is currently in progress.
+     * Implementors can check this inside `_authorizeMint` to allow vault deposits
+     * without granting general mint permissions.
+     */
+    function _isVaultDeposit() internal view returns (bool) {
+        return _vaultDepositActive;
+    }
+
+    /**
      * @dev Deposit/mint common workflow.
      */
     function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual {
@@ -249,7 +260,9 @@ abstract contract ERC4626 is UCEF, IERC4626 {
         // assets are transferred and before the shares are minted, which is a valid state.
         // slither-disable-next-line reentrancy-no-eth
         SafeERC20.safeTransferFrom(IUCEF(asset()), caller, address(this), assets);
+        _vaultDepositActive = true;
         _mint(receiver, shares);
+        _vaultDepositActive = false;
 
         emit Deposit(caller, receiver, assets, shares);
     }

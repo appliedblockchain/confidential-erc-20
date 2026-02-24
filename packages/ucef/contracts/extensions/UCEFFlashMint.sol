@@ -21,6 +21,8 @@ import {UCEF} from "../UCEF.sol";
 abstract contract UCEFFlashMint is UCEF, IERC3156FlashLender {
     bytes32 private constant RETURN_VALUE = keccak256("ERC3156FlashBorrower.onFlashLoan");
 
+    bool private _flashLoanActive;
+
     /**
      * @dev The loan token is not valid.
      */
@@ -103,6 +105,15 @@ abstract contract UCEFFlashMint is UCEF, IERC3156FlashLender {
      * @param data An arbitrary datafield that is passed to the receiver.
      * @return `true` if the flash loan was successful.
      */
+    /**
+     * @dev Returns true if a flash loan mint is currently in progress.
+     * Implementors can check this inside `_authorizeMint` to allow flash loan minting
+     * without granting general mint permissions.
+     */
+    function _isFlashLoan() internal view returns (bool) {
+        return _flashLoanActive;
+    }
+
     // This function can reenter, but it doesn't pose a risk because it always preserves the property that the amount
     // minted at the beginning is always recovered and burned at the end, or else the entire function will revert.
     // slither-disable-next-line reentrancy-no-eth
@@ -117,7 +128,9 @@ abstract contract UCEFFlashMint is UCEF, IERC3156FlashLender {
             revert ERC3156ExceededMaxLoan(maxLoan);
         }
         uint256 fee = flashFee(token, value);
+        _flashLoanActive = true;
         _mint(address(receiver), value);
+        _flashLoanActive = false;
         if (receiver.onFlashLoan(_msgSender(), token, value, fee, data) != RETURN_VALUE) {
             revert ERC3156InvalidReceiver(address(receiver));
         }
