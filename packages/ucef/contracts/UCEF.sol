@@ -129,7 +129,7 @@ abstract contract UCEF is ERC20 {
      * a minting policy. Without an implementation the contract will not compile, preventing
      * accidental deployment of tokens with unprotected minting.
      */
-    function _authorizeMint(address to, uint256 amount) internal virtual;
+    function _authorizeMint(address to, uint256 amount) internal view virtual;
 
     /**
      * @dev Returns the balance of the specified account if authorized
