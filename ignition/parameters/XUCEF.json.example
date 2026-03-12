@@ -1,0 +1,7 @@
+{
+	"XUCEFModule": {
+		"name": "xUSDC",
+		"symbol": "XUSDC",
+		"decimals": 6
+	}
+}

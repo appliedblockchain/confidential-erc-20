@@ -28,3 +28,6 @@ dist
 
 .DS_Store
 out
+
+ignition/parameters/*
+!ignition/parameters/*.example

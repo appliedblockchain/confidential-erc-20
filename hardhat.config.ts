@@ -4,6 +4,8 @@ import { config as Config } from 'dotenv'
 import '@nomicfoundation/hardhat-ignition'
 import '@appliedblockchain/silentdatarollup-hardhat-plugin'
 import { SignatureType } from '@appliedblockchain/silentdatarollup-core'
+import './tasks/set-xerc20-limits'
+import './tasks/call'
 
 // Load .env file
 Config()
@@ -31,6 +33,13 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+  },
+  ignition: {
+    strategyConfig: {
+      create2: {
+        salt: process.env.CREATE2_SALT ?? '0xab5d000000000000000000000000000000000000000000000000000000000000'
+      }
+    }
   },
   networks: {
     localhost: {

@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@tokenysolutions/t-rex@4.1.6':
-    hash: iry6mwuqzhz255vox72o2g6uvq
+    hash: bdbd4d25cb1f7358f5eb93e1ee62e3cf2369a31f34541b03860ae15e80536038
     path: patches/@tokenysolutions__t-rex@4.1.6.patch
 
 importers:
@@ -14,14 +14,14 @@ importers:
   .:
     devDependencies:
       '@appliedblockchain/silentdatarollup-core':
-        specifier: 1.0.6
-        version: 1.0.6
+        specifier: 1.0.8
+        version: 1.0.8
       '@appliedblockchain/silentdatarollup-ethers-provider':
-        specifier: 1.0.6
-        version: 1.0.6
+        specifier: 1.0.8
+        version: 1.0.8
       '@appliedblockchain/silentdatarollup-hardhat-plugin':
-        specifier: 1.0.6
-        version: 1.0.6(ethers@6.13.2)(hardhat@2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2))
+        specifier: 1.0.8
+        version: 1.0.8(ethers@6.13.2)(hardhat@2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2))
       '@appliedblockchain/ucef':
         specifier: workspace:*
         version: link:packages/ucef
@@ -42,7 +42,7 @@ importers:
         version: 1.0.10(hardhat@2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2))
       '@nomicfoundation/hardhat-toolbox':
         specifier: 5.0.0
-        version: 5.0.0(32tvdyqhusnhk5bf77tetugxmm)
+        version: 5.0.0(2ab08733cc60c5559e037b076c69fd1c)
       '@nomicfoundation/hardhat-verify':
         specifier: 2.0.8
         version: 2.0.8(hardhat@2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2))
@@ -60,7 +60,7 @@ importers:
         version: 5.4.0(@openzeppelin/contracts@5.4.0)
       '@tokenysolutions/t-rex':
         specifier: 4.1.6
-        version: 4.1.6(patch_hash=iry6mwuqzhz255vox72o2g6uvq)
+        version: 4.1.6(patch_hash=bdbd4d25cb1f7358f5eb93e1ee62e3cf2369a31f34541b03860ae15e80536038)
       '@typechain/ethers-v6':
         specifier: 0.5.1
         version: 0.5.1(ethers@6.13.2)(typechain@8.3.2(typescript@5.9.2))(typescript@5.9.2)
@@ -127,6 +127,9 @@ importers:
       typescript:
         specifier: 5.9.2
         version: 5.9.2
+      xerc20:
+        specifier: https://github.com/defi-wonderland/xERC20/archive/refs/tags/v1.0.0.tar.gz
+        version: https://github.com/defi-wonderland/xERC20/archive/refs/tags/v1.0.0.tar.gz
 
   packages/ucef:
     dependencies:
@@ -142,7 +145,7 @@ importers:
         version: 5.4.0(@openzeppelin/contracts@5.4.0)
       '@tokenysolutions/t-rex':
         specifier: 4.1.6
-        version: 4.1.6(patch_hash=iry6mwuqzhz255vox72o2g6uvq)
+        version: 4.1.6(patch_hash=bdbd4d25cb1f7358f5eb93e1ee62e3cf2369a31f34541b03860ae15e80536038)
       '@typechain/ethers-v6':
         specifier: 0.5.1
         version: 0.5.1(ethers@6.13.2)(typechain@8.3.2(typescript@5.9.2))(typescript@5.9.2)
@@ -170,7 +173,7 @@ importers:
         version: 4.9.6
       '@tokenysolutions/t-rex':
         specifier: 4.1.6
-        version: 4.1.6(patch_hash=iry6mwuqzhz255vox72o2g6uvq)
+        version: 4.1.6(patch_hash=bdbd4d25cb1f7358f5eb93e1ee62e3cf2369a31f34541b03860ae15e80536038)
       '@typechain/ethers-v6':
         specifier: 0.5.1
         version: 0.5.1(ethers@6.13.2)(typechain@8.3.2(typescript@5.9.2))(typescript@5.9.2)
@@ -186,20 +189,20 @@ packages:
   '@adraffy/ens-normalize@1.10.1':
     resolution: {integrity: sha512-96Z2IP3mYmF1Xg2cDm8f1gWGf/HUVedQ3FMifV4kG/PQ4yEP51xDtRAEfhVNt5f/uzpNkZHwWQuUcu6D6K+Ekw==}
 
-  '@appliedblockchain/silentdatarollup-core@1.0.6':
-    resolution: {integrity: sha512-GEahN9bpVMkas4vhw7Npjln0r28Z04bk1kWWOu0UEQJYuex675ITrYQQHFA6CdoLnUBRNzA5usm6ytRXkFY/tQ==}
+  '@appliedblockchain/silentdatarollup-core@1.0.8':
+    resolution: {integrity: sha512-+F4eZqqj/h7rNuX3AvKzk6apg9HROITybxp+yRXKcwR9t3e0gYgXF947cz8nWiS0xD1PX7u7QfjGdiWlBBpiyA==}
     engines: {node: '>=18.0.0'}
 
-  '@appliedblockchain/silentdatarollup-ethers-provider@1.0.6':
-    resolution: {integrity: sha512-gt6SbZWaR1Uqg2dkJ5Opp1rtBM7SqNBDZq26q9PRl82sSRtIYqFF4JSTQqekRUTqEcOV2xpSK0u/X36xeMkp5w==}
+  '@appliedblockchain/silentdatarollup-ethers-provider@1.0.8':
+    resolution: {integrity: sha512-1reU9s/mYc6QcL3yTflIG7f49vXbO6trpvMj04zlxDQisSBvZZsGi2vhvd3kS7OSmoAOZGgceZiHhe+sXGUz3g==}
     engines: {node: '>=18.0.0'}
 
-  '@appliedblockchain/silentdatarollup-hardhat-plugin@1.0.6':
-    resolution: {integrity: sha512-aBAb3u2qCQpIG4zVbw5z/h1es4o0Y6Xiyi3xpWSaoKEfLeBhkSpuyjARyweSFlWBag8+6QcRBV5oYSolfXq1Cw==}
+  '@appliedblockchain/silentdatarollup-hardhat-plugin@1.0.8':
+    resolution: {integrity: sha512-8PlIqU/5IBp673oDiympzJ0ntySSgQBoNbQkr90BmSDqOPTDYBYxnnSv73LBY1X+aU1VjLIjOP5PLc1GYa5Qhw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      ethers: 6.13.2
-      hardhat: 2.22.10
+      ethers: ^6.0.0
+      hardhat: ^2.0.0
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -2669,6 +2672,10 @@ packages:
       utf-8-validate:
         optional: true
 
+  xerc20@https://github.com/defi-wonderland/xERC20/archive/refs/tags/v1.0.0.tar.gz:
+    resolution: {tarball: https://github.com/defi-wonderland/xERC20/archive/refs/tags/v1.0.0.tar.gz}
+    version: 1.0.1
+
   y18n@5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}
     engines: {node: '>=10'}
@@ -2697,7 +2704,7 @@ snapshots:
 
   '@adraffy/ens-normalize@1.10.1': {}
 
-  '@appliedblockchain/silentdatarollup-core@1.0.6':
+  '@appliedblockchain/silentdatarollup-core@1.0.8':
     dependencies:
       debug: 4.3.7
       ethers: 6.13.2
@@ -2706,9 +2713,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@appliedblockchain/silentdatarollup-ethers-provider@1.0.6':
+  '@appliedblockchain/silentdatarollup-ethers-provider@1.0.8':
     dependencies:
-      '@appliedblockchain/silentdatarollup-core': 1.0.6
+      '@appliedblockchain/silentdatarollup-core': 1.0.8
       debug: 4.3.7
       ethers: 6.13.2
     transitivePeerDependencies:
@@ -2716,9 +2723,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@appliedblockchain/silentdatarollup-hardhat-plugin@1.0.6(ethers@6.13.2)(hardhat@2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2))':
+  '@appliedblockchain/silentdatarollup-hardhat-plugin@1.0.8(ethers@6.13.2)(hardhat@2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2))':
     dependencies:
-      '@appliedblockchain/silentdatarollup-core': 1.0.6
+      '@appliedblockchain/silentdatarollup-core': 1.0.8
       '@nomicfoundation/hardhat-ethers': 3.0.8(ethers@6.13.2)(hardhat@2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2))
       debug: 4.3.7
       ethers: 6.13.2
@@ -3215,7 +3222,7 @@ snapshots:
       ethereumjs-util: 7.1.5
       hardhat: 2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2)
 
-  '@nomicfoundation/hardhat-toolbox@5.0.0(32tvdyqhusnhk5bf77tetugxmm)':
+  '@nomicfoundation/hardhat-toolbox@5.0.0(2ab08733cc60c5559e037b076c69fd1c)':
     dependencies:
       '@nomicfoundation/hardhat-chai-matchers': 2.0.7(@nomicfoundation/hardhat-ethers@3.0.6(ethers@6.13.2)(hardhat@2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2)))(chai@4.5.0)(ethers@6.13.2)(hardhat@2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2))
       '@nomicfoundation/hardhat-ethers': 3.0.6(ethers@6.13.2)(hardhat@2.22.10(ts-node@10.9.2(@types/node@20.19.17)(typescript@5.9.2))(typescript@5.9.2))
@@ -3393,7 +3400,7 @@ snapshots:
 
   '@solidity-parser/parser@0.20.2': {}
 
-  '@tokenysolutions/t-rex@4.1.6(patch_hash=iry6mwuqzhz255vox72o2g6uvq)': {}
+  '@tokenysolutions/t-rex@4.1.6(patch_hash=bdbd4d25cb1f7358f5eb93e1ee62e3cf2369a31f34541b03860ae15e80536038)': {}
 
   '@tsconfig/node10@1.0.11': {}
 
@@ -5693,6 +5700,8 @@ snapshots:
   ws@8.17.1: {}
 
   ws@8.18.0: {}
+
+  xerc20@https://github.com/defi-wonderland/xERC20/archive/refs/tags/v1.0.0.tar.gz: {}
 
   y18n@5.0.8: {}
 

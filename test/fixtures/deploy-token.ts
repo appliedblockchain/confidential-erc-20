@@ -12,13 +12,13 @@ type TokenContract = BaseContract & {
 }
 
 export async function deployToken<T extends TokenContract>(
-  contactName: string,
+  contractName: string,
   args: unknown[] = [],
   options: DeployTokenOptions = {},
 ) {
   const [owner] = await ethers.getSigners()
 
-  const TokenFactory = await ethers.getContractFactory(contactName)
+  const TokenFactory = await ethers.getContractFactory(contractName)
   const token = (await TokenFactory.deploy(...args)) as unknown as T
   await token.waitForDeployment()
 
