@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "license": "MIT",
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "compile": "npx hardhat compile",
     "compile:all": "pnpm -r --if-present compile && pnpm compile",
