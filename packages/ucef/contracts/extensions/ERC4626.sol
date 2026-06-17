@@ -52,6 +52,26 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 abstract contract ERC4626 is UCEF, IERC4626 {
     using Math for uint256;
 
+    /**
+    * @notice Deposit event parameter mapping:
+    *   - address param0: caller - Address that initiated the deposit
+    *   - address param1: owner  - Address that owns the shares
+    *   - uint256 param2: assets - Amount of assets deposited
+    *   - uint256 param3: shares - Amount of shares minted
+    * @custom:signature Deposit(address caller, address owner, uint256 assets, uint256 shares)
+    */
+    bytes32 public constant EVENT_TYPE_DEPOSIT = keccak256("Deposit(address,address,uint256,uint256)");
+    /**
+    * @notice Withdraw event parameter mapping:
+    *   - address param0: caller - Address that initiated the withdrawal
+    *   - address param1: receiver - Address that receives the assets
+    *   - address param2: owner - Address that owns the shares
+    *   - uint256 param3: assets - Amount of assets withdrawn
+    *   - uint256 param4: shares - Amount of shares burned
+    * @custom:signature Withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares)
+    */
+    bytes32 public constant EVENT_TYPE_WITHDRAW = keccak256("Withdraw(address,address,address,uint256,uint256)");
+
     IUCEF private immutable _asset;
     uint8 private immutable _underlyingDecimals;
 
@@ -264,7 +284,7 @@ abstract contract ERC4626 is UCEF, IERC4626 {
         _mint(receiver, shares);
         _vaultDepositActive = false;
 
-        emit Deposit(caller, receiver, assets, shares);
+        _emitDepositEvent(caller, receiver, assets, shares);
     }
 
     /**
@@ -290,7 +310,127 @@ abstract contract ERC4626 is UCEF, IERC4626 {
         _burn(owner, shares);
         SafeERC20.safeTransfer(IUCEF(asset()), receiver, assets);
 
-        emit Withdraw(caller, receiver, owner, assets, shares);
+        _emitWithdrawEvent(caller, receiver, owner, assets, shares);
+    }
+
+    /**
+     * @dev Internal function to emit Deposit events
+     * Can be overridden by derived contracts to implement custom emission logic
+     * Default implementation emits private events with selective visibility
+     * @param caller The address that initiated the deposit
+     * @param receiver The address that receives the shares
+     * @param assets The amount of assets deposited
+     * @param shares The amount of shares minted
+     */
+    function _emitDepositEvent(
+        address caller,
+        address receiver,
+        uint256 assets,
+        uint256 shares
+    ) internal virtual {
+        address[] memory allowedViewers = _getDepositEventViewers(caller, receiver, assets, shares);
+        bytes memory payload = abi.encode(caller, receiver, assets, shares);
+
+        emit PrivateEvent(allowedViewers, EVENT_TYPE_DEPOSIT, payload);
+    }
+
+    /**
+     * @dev Internal function to determine who can view Deposit events
+     * Can be overridden by derived contracts to implement custom viewer logic
+     * Default implementation: only caller and receiver can view
+     * @param caller The address that initiated the deposit
+     * @param receiver The address that receives the shares
+     * @param assets The amount of assets deposited
+     * @param shares The amount of shares minted
+     * @return allowedViewers Array of addresses authorized to view this deposit
+     */
+    function _getDepositEventViewers(
+        address caller,
+        address receiver,
+        uint256 assets,
+        uint256 shares
+    ) internal view virtual returns (address[] memory allowedViewers) {
+        assets; shares; // Available for amount-based vault privacy
+
+        // Count unique non-zero addresses
+        uint256 viewerCount = 0;
+        if (caller != address(0)) viewerCount++;
+        if (receiver != address(0) && receiver != caller) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        if (caller != address(0)) {
+            allowedViewers[index++] = caller;
+        }
+        if (receiver != address(0) && receiver != caller) {
+            allowedViewers[index] = receiver;
+        }
+    }
+
+    /**
+     * @dev Internal function to emit Withdraw events
+     * Can be overridden by derived contracts to implement custom emission logic
+     * Default implementation emits private events with selective visibility
+     * @param caller The address that initiated the withdrawal
+     * @param receiver The address that receives the assets
+     * @param owner The address that owns the shares being redeemed
+     * @param assets The amount of assets withdrawn
+     * @param shares The amount of shares burned
+     */
+    function _emitWithdrawEvent(
+        address caller,
+        address receiver,
+        address owner,
+        uint256 assets,
+        uint256 shares
+    ) internal virtual {
+        address[] memory allowedViewers = _getWithdrawEventViewers(caller, receiver, owner, assets, shares);
+        bytes memory payload = abi.encode(caller, receiver, owner, assets, shares);
+
+        emit PrivateEvent(allowedViewers, EVENT_TYPE_WITHDRAW, payload);
+    }
+
+    /**
+     * @dev Internal function to determine who can view Withdraw events
+     * Can be overridden by derived contracts to implement custom viewer logic
+     * Default implementation: only caller, receiver, and owner can view
+     * @param caller The address that initiated the withdrawal
+     * @param receiver The address that receives the assets
+     * @param owner The address that owns the shares being redeemed
+     * @param assets The amount of assets withdrawn
+     * @param shares The amount of shares burned
+     * @return allowedViewers Array of addresses authorized to view this withdrawal
+     */
+    function _getWithdrawEventViewers(
+        address caller,
+        address receiver,
+        address owner,
+        uint256 assets,
+        uint256 shares
+    ) internal view virtual returns (address[] memory allowedViewers) {
+        assets; shares; // Available for amount-based vault privacy
+
+        // Count unique non-zero addresses
+        uint256 viewerCount = 0;
+        if (caller != address(0)) viewerCount++;
+        if (receiver != address(0) && receiver != caller) viewerCount++;
+        if (owner != address(0) && owner != caller && owner != receiver) viewerCount++;
+
+        allowedViewers = new address[](viewerCount);
+        uint256 index = 0;
+
+        // Populate viewer list
+        if (caller != address(0)) {
+            allowedViewers[index++] = caller;
+        }
+        if (receiver != address(0) && receiver != caller) {
+            allowedViewers[index++] = receiver;
+        }
+        if (owner != address(0) && owner != caller && owner != receiver) {
+            allowedViewers[index] = owner;
+        }
     }
 
     function _decimalsOffset() internal view virtual returns (uint8) {
