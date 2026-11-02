@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> **This repository has moved.** Development now continues in [appliedblockchain/ucef-contracts](https://github.com/appliedblockchain/ucef-contracts), which contains the content of both this repository and [confidential-erc-3643](https://github.com/appliedblockchain/confidential-erc-3643).
+> This repository is no longer maintained. Please open new issues and pull requests in [ucef-contracts](https://github.com/appliedblockchain/ucef-contracts).
+> The contracts are now in the [`packages/`](https://github.com/appliedblockchain/ucef-contracts/tree/main/packages) folder of ucef-contracts.
+
 # **Unopinionated Confidential ERC-20 Framework (UCEF)**
 
 **Introduction**
